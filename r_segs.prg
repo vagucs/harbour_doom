@@ -88,6 +88,19 @@ RETURN Int( ( n - nDiv + 1 ) / nDiv )
 STATIC FUNCTION AsU32( n )
 RETURN ( n & 0xFFFFFFFF )
 
+/* Vanilla reads past finetangent[4096] into finesine, which follows it in memory. */
+STATIC FUNCTION FineTangentAt( nAngle )
+    MEMVAR finetangent
+    MEMVAR finesine
+    IF nAngle < Len( finetangent )
+        RETURN finetangent[ nAngle + 1 ]
+    ENDIF
+    nAngle -= Len( finetangent )
+    IF nAngle < Len( finesine )
+        RETURN finesine[ nAngle + 1 ]
+    ENDIF
+RETURN 0
+
 STATIC FUNCTION AsS32( n )
     n := ( n & 0xFFFFFFFF )
     IF n >= 0x80000000
@@ -291,7 +304,7 @@ PROCEDURE R_RenderSegLoop()
         IF segtextured
             angle := UShr( AsU32( rw_centerangle + xtoviewangle[ rw_x + 1 ] ), ;
                            ANGLETOFINESHIFT )
-            texturecolumn := rw_offset - FixedMul( finetangent[ angle + 1 ], rw_distance )
+            texturecolumn := rw_offset - FixedMul( FineTangentAt( angle ), rw_distance )
             texturecolumn := Shar( texturecolumn, FRACBITS )
 
             index := UShr( rw_scale, LIGHTSCALESHIFT )
