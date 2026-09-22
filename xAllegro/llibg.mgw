@@ -1,0 +1,72 @@
+#
+# Makefile / Mingw
+#
+# Autor: Wagner Nunes da Silva
+# http://www.vagucs.com.br
+# vagucs@vagucs.com.br
+# vagucs@bol.com.br
+# -----------------------------
+# 55+ (33) 3314-2905
+# 55+ (33) 8412-1570
+#
+
+# Coloque aqui os fontes da sua lib, pode ser .C ou .PRG
+
+SRC=bitmap.prg gtallegd.c ssf.c savepng.c loadpng.c \
+regpng.c primitivo.prg truecolor.prg math.prg fgl.prg mouseapi.prg \
+ttf.prg font.prg ambiente.prg datfile.prg llibg.prg windows.c
+# hbgtcore.c
+
+# Coloque aqui o nome da lib a ser gerada
+
+LIB=libllibg.a
+
+C_SRC=$(SRC:.prg=.c)
+OBJ=$(C_SRC:.c=.o)
+
+# Nome do compilador C
+CC=gcc
+
+# Nome do programa que irar linkar a lib
+LIB_LINK=ar
+
+CFLAGS=-Wall -O3 -DALLEGRO_STATICLINK
+ifdef WINDOWS
+	LDFLAGS=-mwindows
+else
+	LDFLAGS=
+endif
+HARBOUR=harbour
+HARBOUR_FLAGS=-m -n -DALLEGRO_STATICLINK
+ifdef WINDOWS
+	LIB_DIR=-L c:/mingw-4.8.1/lib -Lc:/harbour/lib
+	HB_INC_INSTALL=c:/hbmgw-4.8.1/include;c:/harbour/include
+else
+	LIB_DIR=-L/usr/lib/harbour
+	HB_INC_INSTALL=/usr/include/harbour
+endif
+
+.PHONY : all
+all: $(OBJ)
+	$(LIB_LINK) -q $(LIB) $(OBJ)
+
+.SUFFIXES: .o .c .prg
+.prg.c:
+	$(HARBOUR) $< -i$(HB_INC_INSTALL) $(HARBOUR_FLAGS)
+
+.c.o:
+	$(CC) -c $(*).c $(CFLAGS) $(LIB_DIR) -I$(HB_INC_INSTALL)
+
+# Regra para limpar o diretorio, repara que os .C relativos a .PRG devem ser colocados separados, nunca adicionar del $(C_SRC)
+# pois os fontes .C que nao tem .PRG relativos serao apagados
+.PHONY : clean
+clean:
+ifdef WINDOWS
+	del $(OBJ)
+	del ambiente.c bitmap.c datfile.c exemplo.c fgl.c font.c llibg.c math.c mouseapi.c primitivo.c truecolor.c ttf.c
+	del $(LIB)
+else
+	rm -f $(OBJ)
+	rm -f ambiente.c bitmap.c datfile.c exemplo.c fgl.c font.c llibg.c math.c mouseapi.c primitivo.c truecolor.c ttf.c
+	rm -f $(LIB)
+endif

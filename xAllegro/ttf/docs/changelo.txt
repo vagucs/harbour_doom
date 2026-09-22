@@ -1,0 +1,235 @@
+Version 2.3 - Cleanup of makefiles
+
+ - I didnt understand the makefiles anymore so I made a new one that works
+   for DJGPP and Linux.  I havent tested it on any other platforms.
+ - The low memory procedures are hopelessly broken so they have been reverted
+   to the standard method.
+ - Changed included ttf font to DevaVuSans because it is much better quality.
+ - Newer gcc compiler gives warnings about type-punning, so removed warnings
+   during compilation :0
+
+Version 2.2 - Small bug fix
+
+ - Makefile changes communicated by Jens Hassler
+ - Ran indent on the sources
+ - Fixed 8-bit drawing
+ - Removed some examples that are too much trouble to maintain
+
+Version 2.1 - Allegro 4.2.1 and GCC 4 compatibility
+
+ - by Florian Xaver
+ - renamed load_font() to load_font_2(). But who needs it?
+
+Version 2.0 - Allegro WIP 3.9.36 compatibility
+
+ - Eric Botcazou sent me a big patch to get everything to work with the
+   Allegro WIPs since they changed the FONT struct again.  Thanks Eric!
+
+Version 1.9 - Windows compatability
+
+ - Raul Carolus solved the problem with getting Allegttf to access the
+   _textmode variable in windows.  Now AllegTTF supports Windows too!
+
+ - Dan Bogdanov added Mingw32 compatability.  Read the FAQ for how to compile
+   AllegTTF for different platforms.  Thanks Dan!
+
+Version 1.8 - Bug fixes and Linux compatibility
+
+ - Changed the use of the blender functions so I could avoid a 255-alpha in
+   the inner loop of the truecolor/empty background functions.  No noticable
+   speedup, but I should have done that long ago.
+
+ - Freetype dropout mode set to 5 since it is supported by Freetype now and
+   it works a little better than mode 3.
+
+ - Andrew R. Gillett told me about a bug that causes crashing when drawing a
+   very large font.  I fixed it by if the font is too big to antialias, it gets
+   drawn using Allegro's builtin text drawing stuff.  Big fonts don't need
+   antialiasing to look good anyway.
+
+ - Jens Hassler told me about a bug in aatextout which would cause crashes when
+   drawing characters that are not in the font.  I fixed the bug by taking some
+   code from Allegro's textout function.
+
+ - If Allegro does not recognise the character in the font it draws a ^
+   character.  I don't like this and thus when aatextout does not find the
+   character, it just draws a ' '.
+
+ - Added load_ttf_font_XX_mem functions to load TTF file by calling TTF2PCX.EXE
+   via a system call.  This means that Freetype does not have to be in memory
+   all the time and the executable can be about 50k smaller.  It does require
+   that the TTF2PCX.EXE file be in the path somewhere.
+
+ - Dan Bogdanov contributed some changes to get everything to work with Linux!
+   He also added the aatextout_right and aaprintf_right functions.  Thanks Dan!
+   I don't have linux (yet) so I cannot test it.  People who use linux are
+   encouraged to test the library.
+
+ - Modified the 24 bit text drawing functions not to use _blender_alpha which
+   is not exported in the Allegro windows DLL.  It is a touch slower now.
+
+ - The _text_mode variable is not exported by the Windows Allegro DLL.  So I
+   can't really see an easy way to get AllegTTF to work with Allegro on
+   Windows.
+
+ - Use a switch instead of a jump table in the empty rendering of 8 bit text
+   so that the code will compile on non-GNU compilers.  It is about 1.5 times
+   slower than the jump table.  GNU compilers use the fast jump table.
+
+TODO:
+
+ - Moved different FONT loading code to seperate files so that they will only
+   be linked in if they are needed.
+
+ - Update the HTML docs with the new functions.
+
+Version 1.7 - Minor bug fixes
+
+ - Included the Freetype 1.3.1 engine.
+
+ - Chris La Mantia sent me a bug fix for some problems when TTF2PCX program
+   wasn't making a large enough bitmap to put the characters on.  Thanks Chris!
+
+ - Removed the linking with libstdcx.a for the examples makefile.  I had forgot
+   to take it out when I took out C++ stuff from the examples.  The examples
+   should now build properly if a C only environment is used.
+
+ - Made it compatible for GCC 2.95 and Allegro 3.9.25.
+
+Version 1.6 - Some minor changes
+
+ - Removed the dependancy of ALLEGTTF.H to Allegro's header file.  This means
+   that compilations should go just a little bit faster.
+
+ - Small tradeoff of speed from clipped characters to fully displayed
+   characters.  I assume that most text will be drawn unclipped and that is
+   where the most speed optimization should be.
+
+ - Changed all the included fonts to freeware fonts that I found on the net.
+
+ - Started a simple FAQ.
+
+ - Allegttf now builds properly even if people don't use all the color depths
+   avaliable in Allegro.  i.e. if they don't want 24 bit color support they do
+   the Allegro define and then rebuild Allegro and Allegttf and everything
+   should work fine.
+
+Version 1.5 - Some bug fixes
+
+ - Docs are now HTML format.
+
+ - Melvin Curran found and fixed a bug the the aatextout routine where I
+   wasn't careful with char/int conversions which made characters above 127 to
+   be undisplayed.
+
+Version 1.4 - Mostly small speedups
+
+ - Daniel Cardenas found some problems in the docs with the initializing
+   functions.
+
+ - Tiny speedup and major cleanup in the clipping for most color depths.
+
+ - Changed over to using the _farnspoke/_farnspeek function because they are
+   faster than the _farpoke/_farpeek functions because they do not set the FS
+   register in the inner loop.  I'd expected it would give a greater speedup
+   than it actually did.
+
+ - Split the aatext.c file into seperate files for each color depth etc.
+
+ - Optimized the 15, 16 and 32 bit modes with empty background by using direct
+   memory writes.  Result is between 5% and 30% faster for those modes.
+
+Version 1.3 - Mostly Bug fixes
+
+ - Hendy Irawan found some bugs in the docs.  Thanks Hendy.
+
+ - Small speedup for 8 bit modes with empty background by eliminating the
+   address variables for the bmp_write_line and the bmp_read_line.
+
+ - Fixed some bugs and sped up clipping with 8 bit modes and empty backgrounds.
+   The direct memory writes for speeding up this mode require me to clip
+   everything manually and I sometimes make mistakes. oops.
+
+ - Changed the font loading in the profiling program to load a TTF file instead
+   of the PCX file.  This allows profiling of other font types and sizes to be
+   done more easily.
+
+ - Changed the declaration of variables in 8 bit empty mode to help the
+   optimizer pick variables to put into registers. Very small speed up,
+   hardly noticable.
+
+ - Changed Freetype dropout mode to 2 (it was 5), which is the only dropout
+   mode actually supported by Freetype at the moment. oops.
+
+ - There were some problems with missing letters in some fonts with the
+   changes that Richard Lauder gave me.  (Arial.ttf dropped the T) I've changed
+   some of the types back to int and it seems to have solved the problem.
+
+Version 1.2 - Updated Freetype lib,
+              faster for some modes,
+              C only profiling,
+              and some bug fixes
+
+ - Modified profiling program and profiling class for C only use.
+
+ - Richard Lauder contributed some fixes for Unicode character set handling.
+   I can't say that I've tested it as I know almost nothing about Unicode.
+
+ - Changes the load_ttf_font_ex no longer to use the ascii flag as it isn't
+   used there anymore.
+
+ - Added load_ttf_font_ex2 function to allow users to have more control over
+   loading Unicode character sets.
+
+ - Added in the Freetype 1.2 sources.
+
+ - Changed default character sets for TTF2PCX from 32-255 to 32-128 which is
+   more normal for Allegro fonts, and added the -cs and -ce flags to TTF2PCX
+   to send the start and stop characters.
+
+ - Increased scratchpad size from 32 to 128 for more reasonable limits on
+   character sizes.  Some of the examples were crashing in DOS but not WIN95!
+   The WIN95 DPMI thing is really BAD, and I will try to test things under
+   pure DOS before releasing.
+
+ - Huge increase in speeds for 8 bit empty background rendering by using
+   direct memory writes with far pointers instead of putpixel.  Up to 2 times
+   as fast!
+
+ - Removed the jump tables and replaced them with switch.  Tests showed that
+   the speed difference wasn't that impressive and I decided to go back to
+   the more portable solution.
+
+Version 1.1 - Uses less memory and a little bit faster
+
+ - Changes TTF font loading smoothing downsampling ratio from 8x8 to 4x4 which
+   is almost equal quality but is a lot faster.
+
+ - Unrolled the TTF font loading smoothing downsampling loop.  Using real
+   smoothing should be even faster now.
+
+ - If NULL is passed to antialias_init then big colormaps will only be
+   allocated if necessary.
+
+ - Added antialias_palette(PALETTE pal) function which sets up the palette for
+   use with the antialiasing colormaps.  Can also be passed NULL to free the
+   memory assocaited with 8 bit empty background text drawing.
+
+ - Modified the text output functions to use a character rendering function
+   which will allow better interfacing with Allegro 3.0+WIP code. Users can
+   simply call Allegro's textout with an antialiased font and the correct
+   rendering function will be used.
+
+ - Removed all the switches and replaced them with jump tables for just a
+   little bit extra speed.
+
+ - Changed the scaling of the character BITMAP for a font size to stop from
+   cutting off the tops and bottoms of some TTF fonts.
+
+Version 1.0 beta - May 1998
+
+ - Very first version which grew out of the AATEXT library.  Essentially
+   ALLEGTTF is simply the AATEXT library with TTF load routines from the
+   Freetype Project.  I changed the name because it's no longer just an
+   antialiased text output library, but a real TTF font file loader for
+   Allegro.

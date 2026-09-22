@@ -1,0 +1,101 @@
+
+ALLEGTTF FAQ for version 2.3                                  10:41 07-05-2008 
+
+Questions or comments to: Doug Eleveld <deleveld@dds.nl> 
+
+
+--- FAQ Contents ---
+
+Section 1: Installing
+Section 2: Rebuilding
+Section 3: Bugs
+Section 4: Using Allegttf
+Section 5: Resources
+
+
+--- Section 1: Installing ---
+
+Q: How do I install Allegttf?
+
+A: That depends on your platform.
+
+   --DJGPP--
+
+   1) run "make"
+   2) copy libalttf.a to your DJGPP lib directory and include/allegttf.h to 
+      your DJGPP include directory.
+
+   --Linux--
+
+   1) run "make"
+   2) copy libalttf.a to /usr/local/lib and include/allegttf.h to 
+      /usr/local/include
+
+   --MinGW32 static version--
+
+   1) run "make"
+   2) copy libalttf.a to your MINGW32 lib directory and include/allegttf.h to 
+      your MINGW32 include directory.
+
+
+--- Section 2: Rebuilding ---
+
+Q: After I installed the latest version of Allegro, Allegttf doesn't work 
+   anymore..
+
+A: Allegttf depends on the Allegro header files.  If Allegro gets a new
+   version you have to rebuild and reinstall Allegttf.  
+
+
+--- Section 3: Bugs ---
+
+Q: I think I found a bug.  How do I get you to fix it?
+
+A: Well, you have to tell me as much as possible about where the bug occurs
+   and under what conditions it shows up.  There are two approaches:
+
+   1: Send me the smallest amount of code that procuces the bug.
+
+   2: Fix it yourself and send me the fixed source code.
+
+   Of course I'd prefer that you did all of these things, especially number 2.
+   You can send the bug to my email address, which is mentioned elsewhere in 
+   the docs.
+
+
+Q: The linker complains that it cannot find some Allegro variables while I 
+   really did link with Allegttf library and the Allegro library.
+
+A: Did you make sure that you linked to libalttf.a before liballeg.a?  Just 
+   remember that the low-level libraries get linked last.  Since libalttf.a
+   relies on stuff from liballeg.a and therefore must be linked first.  If
+   in doubt, look at the order of the libraries in the examples.
+
+Q: I downloaded a font from the web and Allegttf doesn't print it out 
+   correctly.
+
+A: I really don't know.  Some fonts are pretty poor quality and probably 
+   use some weird unicode stuff that I don't understand. sorry.
+
+
+--- Section 4: Using Allegttf ---
+
+Q: How to I print a font in bold or italics.
+
+A: You can't yet.  You go find a font that looks like the font, but is bolder
+   and use that.  I don't know of any algorithm that bolds/italicices fonts and 
+   still lets the font look good.  Of course if you know how to do this you can
+   send me some info on the algorithm (or send me some code) and I'll include 
+   it in the next version along with a great big thanks to you.
+
+
+--- Section 4: Resources ---
+
+Q: Where can I find freeware and shareware truetype fonts to use with Allegttf?
+
+A: Oh man, there are thousands of them.  Do a web search with the words "free 
+   ttf font" and you should find enough links to make you sick.
+
+
+End of ALLEGTTF FAQ...
+

@@ -1,0 +1,52 @@
+#
+# Makefile generico para xHarbour
+#
+# Autor: Wagner Nunes da Silva
+# http://www.vagucs.com.br
+# vagucs@vagucs.com.br
+# vagucs@bol.com.br
+# -----------------------------
+# 55+ (33) 3314-2242
+# 55+ (33) 3314-1578
+# 55+ (33) 8802-4151
+#
+HB_INC_INSTALL=-Ic:/mingw/include;c:/hbmgw/include
+HB_LIB_INSTALL=-L c:/mingw/lib -Lc:/hbmgw/lib
+# Compilador C que sera usado
+CC=c:\mingw\bin\gcc
+
+# Compilador que sera usada para gerar o .C
+HARBOUR =c:\hbmgw\bin\harbour
+
+# Especifique todos os .PRG's aqui com a extensão .O
+OBJS=exemplo.o
+
+# Especifique aqui o nome do arquivo executável
+EXE=exemplo.exe
+
+# Aqui ficam as libs
+LIBS=-Wl,--start-group -lalleg -lllibg -lddraw -ldxguid -ldinput -lgdi32 \
+-ldsound -lhbct -lalttf -lalleg -lhbextern -lhbdebug -lhbvm -lhbrtl -lhblang -lhbcpage \
+-lgtcgi -lgtpca -lgtstd -lgtwin -lgtwvt -lgtgui -lhbrdd -lhbuddall -lhbusrrdd -lrddntx \
+-lrddcdx -lrddnsx -lrddfpt -lhbrdd -lhbhsx -lhbsix -lhbmacro -lhbcplr -lhbpp -lhbcommon \
+-lkernel32 -luser32 -lgdi32 -ladvapi32 -lws2_32 -lwinspool -lcomctl32 -lcomdlg32 -lshell32 \
+-luuid -lole32 -loleaut32 -lmpr -lwinmm -lmapi32 -limm32 -lmsimg32 -lwininet -lhbpcre -lhbzlib \
+-Wl,--end-group
+
+
+# Aqui ficam as libs de sistema que o xHarbour usa para compilar o sistema
+SYS_LIB=-lalleg -lpng -lwinmm -ldsound -lole32 -ldxguid -lddraw \
+        -ldinput -lgdi32
+
+# Regra para criacao do executavel
+all: $(OBJS)
+   $(CC) $(OBJS) -o$(EXE) $(HB_LIB_INSTALL) $(LIBS) $(SYS_LIB)
+
+.SUFFIXES: .o .c .prg
+# Regra para criacao do .C a partir do .PRG
+.prg.c:
+   $(HARBOUR) $(*).prg -i$(HB_INC_INSTALL) $(HARBOUR_FLAGS) -m -n -DALLEGRO_STATICLINK
+
+# Regra para criacao do .O a partir do .C
+.c.o:
+   $(CC) -c -Wall $< -o$(*).o  -DALLEGRO_STATICLINK

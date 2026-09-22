@@ -1,0 +1,249 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0039)http://www.deleveld.dds.nl/allegttf.htm -->
+<HTML><HEAD><TITLE>AllegTTF</TITLE>
+<META http-equiv=CONTENT-TYPE content="text/html; charset=windows-1252">
+<META content="MSHTML 6.00.2900.3059" name=GENERATOR></HEAD>
+<BODY>
+<H1>ALLEGTTF</H1>
+<H2>Anti-aliased text output and font loading routines for Allegro</H2>
+<H3>Version 2.3 </H3>TTF font loading code from the <A
+href="http://www.freetype.org/">Freetype Project</A>. <BR>(see 
+/source/freetype/licence.txt) 
+<H2>NEWS</H2>
+<ul>
+<li>Version 2.3
+<li>I didnt understand the makefiles anymore so I made a new one that works for
+DJGPP and Linux.  I havent tested it on any other platforms.
+<li>The low memory procedures are hopelessly broken so they have been reverted to
+the standard method.
+<li>Changed included ttf font to DevaVuSans because it is much better quality.
+<li>Newer gcc compiler gives warnings about type-punning, so removed warnings
+during compilation :0
+</ul>
+<UL>
+  <li>Version 2.2
+  <LI>Makefile changes communicated by Jens Hassler 
+  <LI>Ran GNU Indent on the source
+  <LI>Fixed text draing for 8 bit modes 
+  <LI>Florian Xaver for adding Allegro 4.2.1 and GCC 4 compatibility. 
+  <LI>I wont be developing AllegTTF very much anymore, just basic maintence when 
+  I get around to it. If you are unhappy with AllegTTF I suggest you also try <A 
+  href="http://chernsha.sitesled.com/">AllegroFont</A> which is based on 
+  Freetype 2.0 and therefore is better than AllegTTF in some respects. </LI></UL>
+<H2>Download </H2>
+You can download <A href="http://www.deleveld.dds.nl/alttf22.zip">ALLEGTTF 2.2</A>
+or <A href="http://www.deleveld.dds.nl/alttf23.zip">ALLEGTTF 2.3</A>
+<H2>What is ALLEGTTF</H2>ALLEGTTF is a collection of functions to produce 
+anti-aliased text output and TTF (True Type Font) loader, a GRX font loader and 
+a bitmap font loader for use with <A 
+href="http://www.talula.demon.co.uk/allegro/">Allegro</A>. Antialiased text 
+means that fonts have 'soft' edges and blend into their backgrounds smoothly. 
+Antialiased fonts are useful because the look a lot better than non-antialiased 
+fonts, expecially at low resolutions. 
+<P>One day I saw some code that Domenic Cooney had put on his web page to draw 
+antialiased text. He used transparant pixels to draw the antialiasing and I 
+really liked what I saw. I took his code and made some optimizations and 
+re-wrote a lot of it. Now it's a quite a bit faster in most graphic modes, 
+especially when drawing a filled background (i.e. Allegro's text_mode &gt;= 0). 
+It's quite a bit bigger too because there are now more than a few pretty well 
+optimized routnes, which are called depending on the graphic mode colour depth 
+and the text_mode. 
+<P>I also found the <A href="http://www.freetype.org/">Freetype Project</A> on 
+the net which is simple ansi C code for loading True Type Font files into 
+memory. I simply added some routines to get Freetype and Allegro working well 
+together. I DID NOT write any of the files in the /source/freetype directory. 
+These files came from the Freetype Project. 
+<P>ALLEGTTF draws text in 8 bit graphic modes with 6 different antialiasing 
+levels. This is also true when Allegro's text_mode is &gt;=0 in any graphic 
+mode. When in a 15,16,24 or 32 bit graphic mode and with text_mode is &lt;0, 
+then the text is drawn with 255 levels of antialiasing. 
+<P>ALLEGTTF is not very useful without Allegro since it relies on many of 
+Allegro's procedures. The latest version of Allegro can always be found on 
+ftp://x2ftp.oulu.fi, in /pub/msdos/programmer/djgpp2/, and on the Allegro 
+homepage, http://www.talula.demon.co.uk/allegro/. 
+<P>The latest version of ALLEGTTF is always available at: 
+http://huizen.dds.nl/~deleveld/index.htm It might or might not also be available 
+at ftp://x2ftp.oulu.fi, in /pub/msdos/programmer/djgpp2/ 
+<H2>Copyright</H2>ALLEGTTF consists of two parts. One in the code that I wrote 
+for fast text antialiasing (partially taken from Allegro source) and the other 
+part is the Freetype Project which is used for loading TTF fonts. Both sets of 
+code have different restrictions. Any use of ALLEGTTF must meet both 
+requirements. 
+<P>For information on the restrictions on the Freetype project code, see the 
+file /source/freetype.licence.txt. Basically it says that you cannot pretend 
+that you wrote this software yourself and must give links to the Freetype 
+Project homepage. See the file /source/freetype/licence.txt for the complete 
+formal restrictions. 
+<P>The source code that I wrote for ALLEGTTF is swap-ware. You may use, modify, 
+redistribute, and generally hack it about in any way you like, but if you do you 
+must send me something in exchange. This could be a complimentary copy of a 
+game, an addition or improvement to ALLEGTTF, a bug report, some money (this is 
+particularly encouraged if you use ALLEGTTF in a commercial product), or just a 
+copy of your autoexec.bat if you don't have anything better. If you redistribute 
+parts of ALLEGTTF or make a game using it, it would be nice if you mentioned me 
+somewhere in the credits, but if you just want to pinch a few routines that is 
+OK too. I'll trust you not to rip me off. 
+<P>Since this whole library was inspired by the work of Domenic Cooney, I guess 
+that the above copyright also applies to him. So if you send me anything, send 
+it to Domenic also. 
+<P>Of course you must also read Allegro's copyright too, I guess. 
+<H2>Using ALLEGTTF </H2>You have to make your own antialiased fonts this is 
+possible in two ways. 
+<OL>
+  <LI>Use the TTF2PCX program in the examples directory. 
+  <LI>Use the TTF2PCX program which is available from the Allegro homepage. Be 
+  sure to use the maximum allowed antialiasing levels. (0-254, I think) 
+</LI></OL>Since ALLEGTTF is only useful with Allegro, I will assume that you 
+know something about compiling, linking, object files, library files etc. 
+<P>The best way to use ALLEGTTF is to use libalttf.a as a library and use it 
+during your linking process. You can the load TTF fonts, and draw them to the 
+screen and BITMAP structures. 
+<P>If you want maximum speed, make sure that you make an RGB table with Allegro 
+so that ALLEGTTF and use fast table lookup in 8 bit modes instead of having to 
+search the palette to find the proper antialiasing colours. The Allegro docs 
+show how to do this, or you can look at the ALLEGTTF examples which do this 
+also. 
+<P>
+<H2>Initialization functions</H2><CODE>void antialias_init(PALETTE pal) 
+<BR></CODE>This function should be called before using any of the functions in 
+the ALLEGTTF library, however you could skip it and have the first call to the 
+text drawing function initialise itself. Pass it the palette to use when in 8 
+bit colour depth, otherwise NULL. Passing a NULL when using 8 bit color mode 
+will make the palette be calculated only when it's needed. It is only needed in 
+8 bit video modes when plotting text with an empty background. In 15,16,24,or 32 
+bit modes I suggest passing NULL. 
+<P><CODE>void antialias_palette(PALETTE pal) <BR></CODE>Pass it the palette to 
+use when in 8 bit colour depth. Passing a NULL will free any internal colormaps 
+and the colormaps will only be recalculated only when it's needed. It is only 
+needed in 8 bit video modes when plotting text with an empty background. 
+<P><CODE>void antialias_exit(void) <BR></CODE>This function cleans up after the 
+antialiased functions, releasing any internal memory that was used. You don't 
+really have to call this function because it will be done automatically at 
+program exit. 
+<P>
+<H2>Text output functions</H2>For Allegro versions higher that 3.0 + WIP, the 
+user can create a FONT using ALLEGTTF and then call the normal Allegro textout 
+functions and the text will be properly drawn antialised. There is no need for 
+specialized text drawing functions. However you can call the antialiased text 
+output functions directly. They are: 
+<P><CODE>void aatextout(BITMAP *bmp, const FONT *font, const char *string, int 
+x, int y, int colour) <BR>void aatextout_center(BITMAP *bmp, const FONT *font, 
+const char *string, int x, int y, int colour) <BR>void aatextout_right(BITMAP 
+*bmp, const FONT *font, const char *string, int x, int y, int colour) <BR>void 
+aatextprintf(BITMAP *bmp, const FONT *f, int x, int y, int color, const char 
+*format, ...) <BR>void aatextprintf_center(BITMAP *bmp, const FONT *f, int x, 
+int y, int color, const char *format, ...) <BR>void aatextprintf_right(BITMAP 
+*bmp, const FONT *f, int x, int y, int color, const char *format, ...) 
+<BR></CODE>The function aatextout plots antialiased text on the screen just like 
+Allegro's textout function. It is a little slower than the Allegro version, so 
+it should only be used with smoothed fonts. To check out how much slower the 
+antialiased text output is on your machine, run the profile program in the 
+examples directory. Normally the antialiased text drawing is 2 to 8 times slower 
+that Allegro's normal textout. You can use the profile program in the eaxmples 
+directory to find out exactly how fast the text drawing is you computer. 
+<H2>Bitmap font loading functions</H2><CODE>FONT* load_font_2 (const char* 
+filename) <BR></CODE>This function loads an Allegro FONT structure from a file 
+and return a pointer to it. Note that the color conversion mode must be set to 
+COLORCONV_NONE. Don't forget to call the Allegro procedure destroy_font(FONT*) 
+in order to release the memory associated with the font. The code for this 
+function comes almost completely from Allegro's grabber utility. It is also in a 
+seperate object file in the libalttf.a library so unless you use this function, 
+it won't be included in your final executable. 
+<H2>True Type font loading funstions</H2><CODE>FONT* load_ttf_font (const char* 
+filename, const int points, const int smooth) <BR></CODE>This function loads a 
+True Type font (*.TTF) as an Allegro FONT struct. The points variable tells how 
+large the loaded font should be. The smooth tells what kind of font smoothing 
+should be used when loading. See the Font Smoothing Defines section for details. 
+
+<P><CODE>FONT* load_ttf_font_ex (const char* filename, const int points_w, const 
+int points_h, const int smooth) <BR></CODE>This function loads a True Type font 
+(*.TTF) as an Allegro FONT struct. The points_w and points_h tell how wide and 
+how tall the font should be loaded. This allows you to load very tall or very 
+wide fonts. Loading Unicode values can be helpful for loading fonts that contain 
+mostly graphic characters. The smooth tells what kind of font smoothing should 
+be used when loading. See the Font Smoothing Defines section for details. 
+<P><CODE>FONT* load_ttf_font_ex2 (const char* filename, const int points_w, 
+const int points_h, const int begin, const int end, const int smooth) 
+<BR></CODE>This function loads a True Type font (*.TTF) as an Allegro FONT 
+struct. The points_w and points_h tell how wide and how tall the font should be 
+loaded. This allows you to load very tall or very wide fonts. The begin and end 
+variables determine which characters are put into the font. This function might 
+or might not also support the Unicode character sets, but as I know almost 
+nothing about Unicode, so I couldn't tell you. If you want a normal Allegro 
+font, use 32 and 128 for these values. The smooth tells what kind of font 
+smoothing should be used when loading. See the Font Smoothing Defines section 
+for details. 
+<P><CODE>FONT* load_ttf_font_mem (const char* filename, const int points, const 
+int smooth) <BR>FONT* load_ttf_font_ex_mem (const char* filename, const int 
+points_w, const int points_h, const int smooth) <BR>FONT* load_ttf_font_ex2_mem 
+(const char* filename, const int points_w, const int points_h, const int begin, 
+const int end, const int smooth) <BR></CODE>These functions are just like the 
+above functions except they convert the TTF font to the Allegro format via a 
+system call to TTF2PCX.EXE. This saves you from having the Freetype code in 
+memory, so your executables are about 50K smaller. The disadvantage is that it 
+does require TTF2PCX.EXE to be in the path. 
+<H2>Font smoothing defines</H2>These defines are used but the TTF loading 
+functions to determine what kind of font smoothing will be done on the loaded 
+TTF font. 
+<P><CODE>ALLEGTTF_NOSMOOTH <BR></CODE>Loads the font with no font smoothing 
+<BR><CODE>ALLEGTTF_TTFSMOOTH <BR></CODE>Loads the font with font smoothing done 
+by the TTF font loading code. This can look a little wierd for small font sizes. 
+<BR><CODE>ALLEGTTF_REALSMOOTH <BR></CODE>Loads the font with real font smoothing 
+done by the ALLEGTTF library. This looks OK at small font sizes, but can take a 
+long time to load for large fonts. 
+<H2>Bugs </H2>
+<UL>
+  <LI>The <CODE>aatextout</CODE> and the <CODE>aatextout_center</CODE> functions 
+  will not handle properly individual characters larger that 128x128 pixels, as 
+  this is the size of the internal scratchpad for aliasing the characters. It 
+  would be easy to change the source to accept larger characters at the expense 
+  of a little more memory and (possibly) slower output. If you are drawing 
+  characters as big as that you probably don't have to antialias them since they 
+  should be smooth enough already. 
+  <LI>I know almost nothing about unicode so I can't really promise that unicode 
+  characters will be handled properly. </LI></UL>
+<H2>Future Work </H2>Do you have any suggestions about what to add to ALLEGTTF? 
+Just e-mail me. 
+<H2>In Conclusion </H2>Why is ALLEGTTF free? Why are the sources freely 
+available? Because I want ALLEGTTF to be the best anti-aliased text library that 
+there is. When you release your source code and give away your program for free 
+people will use your program and look at your source code. When they find bugs 
+and mistakes they'll tell you and sometimes even fix the bugs themselves. They 
+couldn't do that without your source. The end result is that everybodys software 
+gets better and better. 
+<H2>Thanks </H2>
+<UL>
+  <LI>D. J. Delorie and all the people connected with DJGPP for making such a 
+  powerful tool available for DOS users. It runs in 32 bit protected mode, has 
+  got tons of virtual memory and mind boggling optimization. It's amazingly 
+  powerful and yet free. 
+  <LI>Robert Hohne and everyone connected with the extremely useful RHIDE, an 
+  IDE for DJGPP that has the look and feel of the Borland C++ 3.1 IDE. One of 
+  the best IDE's I have ever used, and yet free. 
+  <LI>Shawn Hargreaves and everyone connected with Allegro, the amazing 
+  graphics, sound and hardware programming library for DJGPP. Fast, complete, 
+  easy to use, and yet free. 
+  <LI>The Freetype Project for producing freely available True Type font loading 
+  code. 
+  <LI>Domenic Cooney for producing the original code and the great idea of 
+  producing the antialiasing by plotting pixels of different transparancies. 
+  <LI>Tom Burgess for letting me freely use his pentium timer macros for the 
+  text output profiler. 
+  <LI>Dan Bogdanov for helping port ALLEGTTF for Linux and Windows. 
+  <LI>Eric Botcazou for patching 1.9 to work with the Allegro WIPs. 
+  <LI>Florian Xaver for adding Allegro 4.2.1 and GCC 4 compatibility. 
+  <LI>Everyone who sent in bug reports and especially those who also submitted 
+  code fixes. 
+  <LI>Everyone at comp.os.msdos.djgpp for being patient and helpful. It's too 
+  bad that the other newsgroups aren't useful and as friendly as this one. 
+</LI></UL>
+<H2>#include &lt;std.disclaimer.h&gt; </H2><CITE>I do not accept responsibility 
+for any effects, adverse or otherwise, that this code may have on you, your 
+computer, your sanity, your dog, and anything else that you can think of. Use it 
+at your own risk.</CITE> 
+<H2>Contact</H2>Doug Eleveld <BR>Saffierstraat 19<BR>9743LE, Groningen <BR>The 
+Netherlands<BR>++31-50-318-9339 
+<P><A 
+href="mailto:D.J.Eleveld@anest.umcg.nl">D.J.Eleveld@anest.umcg.nl</A><BR><A 
+href="mailto:deleveld@dds.nl">deleveld@dds.nl</A><BR><A 
+href="mailto:djeleveld@yahoo.com">djeleveld@yahoo.com</A><BR></P></BODY></HTML>

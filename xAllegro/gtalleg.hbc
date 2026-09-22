@@ -1,0 +1,8 @@
+#
+# $Id: gtalleg.hbc 12402 2009-09-05 00:23:51Z vszakats $
+#
+
+libs=gtalleg
+
+{win}libs=alleg
+{linux}ldflags="`allegro-config --libs 2>/dev/null`"
