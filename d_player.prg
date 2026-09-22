@@ -146,8 +146,8 @@ METHOD New() CLASS player_t
         AAdd( ::maxammo, 0 )
     NEXT
 
-    ::attackdown := 0
-    ::usedown := 0
+    ::attackdown := .F.
+    ::usedown := .F.
     ::cheats := 0
     ::refire := 0
     ::killcount := 0

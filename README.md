@@ -1,6 +1,6 @@
 # doom_hb
 
-DOOM generic portado para Harbour, com interfaces mínimas em C para acesso ao Allegro 4.
+DOOM generic portado para Harbour, com interfaces mínimas em C para acesso ao Allegro 4.2.2.
 
 Por **Wagner Nunes da Silva**
 
@@ -10,20 +10,6 @@ Por **Wagner Nunes da Silva**
 - [www.vagucs.com.br](https://www.vagucs.com.br)
 
 Versão em inglês: [README.en.md](README.en.md)
-
-## Doe
-
-### Ethereum
-
-`0x1b64038A2b1DB73ABd0068d8B9B0d1dC5a90C5F1`
-
-![QR Code Ethereum](docs/qr-ethereum.png)
-
-### PIX
-
-Chave: `vagucs@bol.com.br`
-
-![QR Code PIX](docs/qr-pix.png)
 
 ---
 
@@ -50,7 +36,7 @@ O Allegro 4 é uma biblioteca C (`BITMAP *`, `SAMPLE *`, `MIDI *`, paleta, `stre
 | Arquivo | O que o C faz | Motivo |
 |---|---|---|
 | `doomgeneric_allegro.prg` | Bitmap temporário, paleta 8 bits, `stretch_blit`, teclado, ticks, título da janela | Hardware/API do Allegro; blit por pixel em Harbour é lento demais para 35 fps |
-| `i_video.prg` | `IVideoSetPalette` / `IVideoFinishUpdate` (caminho `-videoc`) | Cópia e escala do framebuffer 320×200 → buffer C do Allegro |
+| `i_video.prg` | Blit opcional em C (`IVideoSetPalette` / `IVideoFinishUpdate`) | O vídeo roda **100% em Harbour** por padrão. Se ficar lento demais, use `-videoc` para copiar e escalar o framebuffer 320×200 em C |
 | `i_allegrosound.prg` | Mixer, samples, vozes, volume/pan | `SAMPLE *` e mixer do Allegro |
 | `i_allegromusic.prg` | Load/play/pause de MIDI | `MIDI *` do Allegro |
 | `m_fixed.prg` | `FixedMul` / `FixedDiv` em 64 bits | Precisa do mesmo overflow/shift do DOOM original (`FRACBITS = 16`) |
@@ -85,7 +71,7 @@ Sem esse C, o Harbour não cria a janela DirectX (`GFX_DIRECTX_WIN`) nesse stack
 
 - Harbour com `hbmk2` em `C:\HARBOUR\BIN`
 - MinGW 4.8.1 em `c:\mingw-4.8.1` (gcc, libs)
-- Allegro 4 estático: `c:\mingw-4.8.1\lib\liballeg.a`
+- Allegro 4.2.2 estático: `c:\mingw-4.8.1\lib\liballeg.a`
 - Compatibilidade xHarbour: `hbmk2 -lxhb`
 
 ### Compilar o port Harbour (o que você usa)
@@ -128,6 +114,79 @@ O boot mínimo começa em **E1M1 / MAP01**, habilidade **Hurt Me Plenty** (`MINI
 
 ---
 
+## Teclas (padrão)
+
+Controles clássicos do DOOM. Dá para remapeá-los em `default.cfg` / `doom_hbdoom.cfg`.
+
+### Movimento e ação
+
+| Tecla | Ação |
+|---|---|
+| Setas | Frente, trás, virar |
+| **Shift** | Correr |
+| **Alt** | Strafe (segurar) |
+| **,** / **.** | Strafe esquerda / direita |
+| **Ctrl** (esquerdo) | Atirar |
+| **Espaço** | Usar / abrir porta |
+| **1**–**8** | Trocar arma |
+| **Pause** | Pausar |
+| **Tab** | Abrir / fechar o mapa |
+
+### Mapa (com o mapa aberto)
+
+| Tecla | Ação |
+|---|---|
+| Setas | Mover o mapa |
+| **+** / **-** | Zoom |
+| **0** | Zoom máximo |
+| **F** | Seguir o jogador |
+| **G** | Grade |
+| **M** | Marcar posição |
+| **C** | Limpar marcas |
+| **Tab** | Fechar o mapa |
+
+### Menu e funções
+
+| Tecla | Ação |
+|---|---|
+| **Esc** | Menu |
+| **Enter** | Confirmar / avançar |
+| **Backspace** | Voltar |
+| **Y** / **N** | Sim / Não |
+| **F1** | Ajuda |
+| **F2** | Salvar |
+| **F3** | Carregar |
+| **F4** | Volume |
+| **F5** | Detalhe gráfico |
+| **F6** | Quick save |
+| **F7** | Encerrar o jogo |
+| **F8** | Mensagens |
+| **F9** | Quick load |
+| **F10** | Sair |
+| **F11** | Gamma |
+| **=** / **-** | Tamanho da tela |
+| **Alt+Enter** | Alternar tela cheia |
+
+### Mouse
+
+| Botão | Ação |
+|---|---|
+| Esquerdo | Atirar |
+| Direito | Strafe |
+| Meio | Andar para frente |
+| Clique duplo | Usar (se `dclick_use` estiver ligado) |
+
+### Cheats (só nostalgia)
+
+Digite no teclado durante o jogo, sem Enter:
+
+| Código | Efeito |
+|---|---|
+| **IDDQD** | Modo Deus (*Degreelessness Mode*) |
+| **IDKFA** | Todas as armas, munição, chaves e armadura |
+
+---
+
 ## Parâmetros da linha de comando
 
 Estes funcionam no boot atual (`doom_hb_Create` → `D_DoomMainMinimal`).
@@ -141,11 +200,11 @@ Estes funcionam no boot atual (`doom_hb_Create` → `D_DoomMainMinimal`).
 
 ### Vídeo
 
-O caminho padrão de paleta / `I_FinishUpdate` é **Harbour**.
+O vídeo roda **100% em Harbour** por padrão (paleta e `I_FinishUpdate`). Se ficar lento demais, use `-videoc`.
 
 | Parâmetro | Descrição |
 |---|---|
-| `-videoc` | Força paleta e blit do framebuffer em **C** (mais rápido; útil para comparar) |
+| `-videoc` | Usa o caminho em C para paleta e blit do framebuffer (alternativa mais rápida) |
 | `-scaling N` | Fator de escala do 320×200 (1–8). Sem isso, calcula sozinho |
 | `-gfxmode rgba8888` | Framebuffer 32 bpp (padrão se não for CMAP256) |
 | `-gfxmode rgb565` | Framebuffer 16 bpp |
@@ -182,9 +241,23 @@ main.prg             cria a janela GTALLEG e chama doom_hb_Create()
 boot.prg             escolhe o IWAD e sobe o jogo
 *.prg / *.ch         motor em Harbour
 xAllegro/            GT Allegro + wrappers C
-base_c/              referência C (não usada pelo compile.bat)
 ```
 
 ---
 
-Chocolate Doom / doomgeneric: veja as licenças originais do Chocolate Doom e do doomgeneric. Allegro 4 e GTALLEG/xHarbour têm as licenças dos respectivos projetos.
+
+## Doe
+
+### Ethereum
+
+`0x1b64038A2b1DB73ABd0068d8B9B0d1dC5a90C5F1`
+
+![QR Code Ethereum](docs/qr-ethereum.png)
+
+### PIX
+
+Chave: `vagucs@bol.com.br`
+
+![QR Code PIX](docs/qr-pix.png)
+
+

@@ -102,11 +102,21 @@ STATIC FUNCTION saveg_read8()
 
 RETURN ( Asc( cBuf ) & 0xFF )
 
+STATIC FUNCTION SavegNum( value )
+    SWITCH ValType( value )
+    CASE "N"
+        RETURN Int( value )
+    CASE "L"
+        RETURN iif( value, 1, 0 )
+    ENDSWITCH
+RETURN 0
+
 STATIC PROCEDURE saveg_write8( value )
     LOCAL nWritten
     MEMVAR save_stream
     MEMVAR savegame_error
 
+    value := SavegNum( value )
     nWritten := FWrite( save_stream, Chr( ( value & 0xFF ) ) )
     IF nWritten < 1
         IF ! savegame_error
@@ -132,6 +142,7 @@ RETURN result
 STATIC PROCEDURE saveg_write16( value )
     LOCAL n
 
+    value := SavegNum( value )
     n := ( value & 0xFFFF )
     IF n < 0
         n := n + 65536
@@ -158,6 +169,7 @@ RETURN result
 STATIC PROCEDURE saveg_write32( value )
     LOCAL n
 
+    value := SavegNum( value )
     n := ( value & 0xFFFFFFFF )
     IF n < 0
         n := n + 4294967296
@@ -209,7 +221,7 @@ RETURN n
 
 STATIC PROCEDURE saveg_writep( p )
 
-    IF p == NIL .OR. ValType( p ) == "O" .OR. ValType( p ) == "B"
+    IF ValType( p ) != "N"
         saveg_write32( 0 )
     ELSE
         saveg_write32( p )
@@ -312,7 +324,7 @@ STATIC FUNCTION SavegBool32( n )
 RETURN ( n != 0 )
 
 STATIC FUNCTION SavegIntBool( lVal )
-RETURN iif( lVal, 1, 0 )
+RETURN iif( ValType( lVal ) == "L", iif( lVal, 1, 0 ), iif( Empty( lVal ), 0, 1 ) )
 
 STATIC PROCEDURE BindMobjThinker( mobj )
     LOCAL oMo := mobj
@@ -698,8 +710,8 @@ STATIC PROCEDURE saveg_read_player_t( str )
         str:maxammo[ i + 1 ] := saveg_read32()
     NEXT
 
-    str:attackdown := saveg_read32()
-    str:usedown := saveg_read32()
+    str:attackdown := SavegBool32( saveg_read32() )
+    str:usedown := SavegBool32( saveg_read32() )
     str:cheats := saveg_read32()
     str:refire := saveg_read32()
     str:killcount := saveg_read32()

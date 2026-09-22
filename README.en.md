@@ -1,6 +1,6 @@
 # doom_hb
 
-DOOM generic ported to Harbour, with minimal C interfaces for Allegro 4.
+DOOM generic ported to Harbour, with minimal C interfaces for Allegro 4.2.2.
 
 By **Wagner Nunes da Silva**
 
@@ -10,20 +10,6 @@ By **Wagner Nunes da Silva**
 - [www.vagucs.com.br](https://www.vagucs.com.br)
 
 Portuguese version: [README.md](README.md)
-
-## Donate
-
-### Ethereum
-
-`0x1b64038A2b1DB73ABd0068d8B9B0d1dC5a90C5F1`
-
-![Ethereum QR Code](docs/qr-ethereum.png)
-
-### PIX
-
-Key: `vagucs@bol.com.br`
-
-![PIX QR Code](docs/qr-pix.png)
 
 ---
 
@@ -50,7 +36,7 @@ Allegro 4 is a C library (`BITMAP *`, `SAMPLE *`, `MIDI *`, palette, `stretch_bl
 | File | What the C does | Why |
 |---|---|---|
 | `doomgeneric_allegro.prg` | Scratch bitmap, 8-bit palette, `stretch_blit`, keyboard, ticks, window title | Allegro hardware/API; a Harbour per-pixel blit is too slow for 35 fps |
-| `i_video.prg` | `IVideoSetPalette` / `IVideoFinishUpdate` (`-videoc` path) | Copy and scale the 320×200 framebuffer into Allegro’s C buffer |
+| `i_video.prg` | Optional C blit (`IVideoSetPalette` / `IVideoFinishUpdate`) | Video runs **100% in Harbour** by default. If that is too slow, use `-videoc` to copy and scale the 320×200 framebuffer in C |
 | `i_allegrosound.prg` | Mixer, samples, voices, volume/pan | Allegro `SAMPLE *` and mixer |
 | `i_allegromusic.prg` | MIDI load/play/pause | Allegro `MIDI *` |
 | `m_fixed.prg` | 64-bit `FixedMul` / `FixedDiv` | Must match original DOOM overflow/shift (`FRACBITS = 16`) |
@@ -85,7 +71,7 @@ Without this C, Harbour cannot open the DirectX window (`GFX_DIRECTX_WIN`) on th
 
 - Harbour with `hbmk2` in `C:\HARBOUR\BIN`
 - MinGW 4.8.1 in `c:\mingw-4.8.1` (gcc and libs)
-- Static Allegro 4: `c:\mingw-4.8.1\lib\liballeg.a`
+- Static Allegro 4.2.2: `c:\mingw-4.8.1\lib\liballeg.a`
 - xHarbour compatibility: `hbmk2 -lxhb`
 
 ### Build the Harbour port (the one you run)
@@ -128,6 +114,79 @@ The minimal boot starts at **E1M1 / MAP01**, skill **Hurt Me Plenty** (`MINIAL_*
 
 ---
 
+## Keys (defaults)
+
+Classic DOOM controls. They can be remapped in `default.cfg` / `doom_hbdoom.cfg`.
+
+### Movement and actions
+
+| Key | Action |
+|---|---|
+| Arrow keys | Forward, back, turn |
+| **Shift** | Run |
+| **Alt** | Strafe (hold) |
+| **,** / **.** | Strafe left / right |
+| **Ctrl** (left) | Fire |
+| **Space** | Use / open door |
+| **1**–**8** | Change weapon |
+| **Pause** | Pause |
+| **Tab** | Toggle automap |
+
+### Automap (while the map is open)
+
+| Key | Action |
+|---|---|
+| Arrow keys | Pan the map |
+| **+** / **-** | Zoom |
+| **0** | Max zoom |
+| **F** | Follow the player |
+| **G** | Grid |
+| **M** | Mark position |
+| **C** | Clear marks |
+| **Tab** | Close the map |
+
+### Menu and function keys
+
+| Key | Action |
+|---|---|
+| **Esc** | Menu |
+| **Enter** | Confirm / go forward |
+| **Backspace** | Back |
+| **Y** / **N** | Yes / No |
+| **F1** | Help |
+| **F2** | Save |
+| **F3** | Load |
+| **F4** | Volume |
+| **F5** | Graphic detail |
+| **F6** | Quick save |
+| **F7** | End game |
+| **F8** | Messages |
+| **F9** | Quick load |
+| **F10** | Quit |
+| **F11** | Gamma |
+| **=** / **-** | Screen size |
+| **Alt+Enter** | Toggle full-screen |
+
+### Mouse
+
+| Button | Action |
+|---|---|
+| Left | Fire |
+| Right | Strafe |
+| Middle | Walk forward |
+| Double-click | Use (if `dclick_use` is on) |
+
+### Cheats (nostalgia only)
+
+Type these on the keyboard during play; no Enter needed:
+
+| Code | Effect |
+|---|---|
+| **IDDQD** | God mode (*Degreelessness Mode*) |
+| **IDKFA** | All weapons, ammo, keys, and armor |
+
+---
+
 ## Command-line parameters
 
 These work on the current boot path (`doom_hb_Create` → `D_DoomMainMinimal`).
@@ -141,11 +200,11 @@ These work on the current boot path (`doom_hb_Create` → `D_DoomMainMinimal`).
 
 ### Video
 
-The default palette / `I_FinishUpdate` path is **Harbour**.
+Video runs **100% in Harbour** by default (palette and `I_FinishUpdate`). If that is too slow, pass `-videoc`.
 
 | Parameter | Description |
 |---|---|
-| `-videoc` | Force palette and framebuffer blit in **C** (faster; useful to compare) |
+| `-videoc` | Use the C path for palette and framebuffer blit (faster fallback) |
 | `-scaling N` | Scale factor from 320×200 (1–8). If omitted, it is computed |
 | `-gfxmode rgba8888` | 32 bpp framebuffer (default when not CMAP256) |
 | `-gfxmode rgb565` | 16 bpp framebuffer |
@@ -182,9 +241,20 @@ main.prg             opens the GTALLEG window and calls doom_hb_Create()
 boot.prg             picks the IWAD and starts the game
 *.prg / *.ch         engine in Harbour
 xAllegro/            Allegro GT + C wrappers
-base_c/              C reference (not used by compile.bat)
 ```
 
 ---
 
-Chocolate Doom / doomgeneric: see the original Chocolate Doom and doomgeneric licenses. Allegro 4 and GTALLEG/xHarbour keep their own project licenses.
+## Donate
+
+### Ethereum
+
+`0x1b64038A2b1DB73ABd0068d8B9B0d1dC5a90C5F1`
+
+![Ethereum QR Code](docs/qr-ethereum.png)
+
+### PIX
+
+Key: `vagucs@bol.com.br`
+
+![PIX QR Code](docs/qr-pix.png)

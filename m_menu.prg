@@ -1125,25 +1125,26 @@ FUNCTION M_Responder( ev )
     ENDIF
 
     IF saveStringEnter != 0
-        SWITCH key
-        CASE KEY_BACKSPACE
+        key := Int( key )
+        ch := iif( ValType( ch ) == "N", Int( ch ), 0 )
+        IF ValType( saveCharIndex ) != "N"
+            saveCharIndex := Len( savegamestrings[ saveSlot + 1 ] )
+        ENDIF
+        IF key == KEY_BACKSPACE
             IF saveCharIndex > 0
                 saveCharIndex := saveCharIndex - 1
                 savegamestrings[ saveSlot + 1 ] := Left( savegamestrings[ saveSlot + 1 ], saveCharIndex )
             ENDIF
-            EXIT
-        CASE KEY_ESCAPE
+        ELSEIF key == KEY_ESCAPE
             saveStringEnter := 0
             savegamestrings[ saveSlot + 1 ] := Left( saveOldString, SAVESTRINGSIZE )
-            EXIT
-        CASE KEY_ENTER
+        ELSEIF key == KEY_ENTER
             saveStringEnter := 0
             IF ! Empty( savegamestrings[ saveSlot + 1 ] )
                 M_DoSave( saveSlot )
             ENDIF
-            EXIT
-        OTHERWISE
-            IF vanilla_keyboard_mapping
+        ELSE
+            IF ! Empty( vanilla_keyboard_mapping )
                 ch := key
             ENDIF
             ch := Asc( Upper( Chr( ch ) ) )
@@ -1156,7 +1157,7 @@ FUNCTION M_Responder( ev )
                 savegamestrings[ saveSlot + 1 ] := Left( savegamestrings[ saveSlot + 1 ], saveCharIndex ) + Chr( ch )
                 saveCharIndex := saveCharIndex + 1
             ENDIF
-        ENDSWITCH
+        ENDIF
         RETURN .T.
     ENDIF
 
