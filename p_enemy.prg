@@ -71,18 +71,6 @@ INIT PROCEDURE init_p_enemy
     nTraceAngle := TRACEANGLE
 RETURN
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
 STATIC FUNCTION AsInt32( n )
     n := ( n & 0xFFFFFFFF )
     IF n >= 2147483648

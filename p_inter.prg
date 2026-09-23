@@ -45,18 +45,6 @@ INIT PROCEDURE init_p_inter
     clipammo := { 10, 4, 20, 1 }
 RETURN
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
 STATIC FUNCTION PlayerIndex( p )
     LOCAL i
     MEMVAR players

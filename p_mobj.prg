@@ -128,18 +128,6 @@ INIT PROCEDURE init_p_mobj
     dummy_mobj := mobj_t():New()
 RETURN
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
 STATIC FUNCTION IfaceCall( xFun, x1, x2 )
     LOCAL nArgs := PCount() - 1
 

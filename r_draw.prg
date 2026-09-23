@@ -49,18 +49,6 @@ STATIC FUNCTION ByteAt( cData, nIndex )
     ENDIF
 RETURN cData[ nIndex + 1 ]
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
 PROCEDURE R_DrawColumn()
     MEMVAR dc_colormap, dc_x, dc_yl, dc_yh, dc_iscale
     MEMVAR dc_texturemid, dc_source, centery, ylookup, columnofs

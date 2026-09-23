@@ -48,17 +48,6 @@ METHOD New() CLASS channel_t
     ::handle := 0
 RETURN Self
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
 STATIC FUNCTION AsU32( n )
 RETURN ( n & 0xFFFFFFFF )
 

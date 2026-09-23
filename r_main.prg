@@ -65,18 +65,6 @@ STATIC FUNCTION ColorMapAt( nLevel )
     ENDIF
 RETURN SubStr( colormaps, nOff, 256 )
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
 STATIC FUNCTION AsU32( n )
 RETURN ( n & 0xFFFFFFFF )
 
@@ -280,7 +268,7 @@ FUNCTION R_PointToDist( x, y )
         frac := 0
     ENDIF
 
-    angle := UShr( AsU32( tantoangle[ Shar( frac, DBITS ) + 1 ] + ANG90 ), ;
+    angle := UShr( tantoangle[ Shar( frac, DBITS ) + 1 ] + ANG90, ;
                    ANGLETOFINESHIFT )
     dist := FixedDiv( dx, finesine[ angle + 1 ] )
 RETURN dist

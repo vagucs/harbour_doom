@@ -200,8 +200,8 @@ PROCEDURE R_AddLine( line )
         angle2 := AsU32( 0 - clipangle )
     ENDIF
 
-    angle1 := UShr( AsU32( angle1 + ANG90 ), ANGLETOFINESHIFT )
-    angle2 := UShr( AsU32( angle2 + ANG90 ), ANGLETOFINESHIFT )
+    angle1 := UShr( angle1 + ANG90, ANGLETOFINESHIFT )
+    angle2 := UShr( angle2 + ANG90, ANGLETOFINESHIFT )
     x1 := viewangletox[ angle1 + 1 ]
     x2 := viewangletox[ angle2 + 1 ]
 
@@ -305,8 +305,8 @@ FUNCTION R_CheckBBox( bspcoord )
         angle2 := AsU32( 0 - clipangle )
     ENDIF
 
-    angle1 := UShr( AsU32( angle1 + ANG90 ), ANGLETOFINESHIFT )
-    angle2 := UShr( AsU32( angle2 + ANG90 ), ANGLETOFINESHIFT )
+    angle1 := UShr( angle1 + ANG90, ANGLETOFINESHIFT )
+    angle2 := UShr( angle2 + ANG90, ANGLETOFINESHIFT )
     sx1 := viewangletox[ angle1 + 1 ]
     sx2 := viewangletox[ angle2 + 1 ]
 

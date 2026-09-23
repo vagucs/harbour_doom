@@ -35,8 +35,26 @@ de tipos (argumento nao numerico vale 0). Usam HB_MAXINT (64 bits): hb_parnl
 seria 32 bits no Windows e quebraria mascaras como ( n & 0xFFFFFFFF ).
 hb_qLBitShift( n, k ) == n << k ; hb_qRBitShift( n, k ) == n >> k (aritmetico).
 */
+
+/*
+Implementacao PRG original de Shar (antes copiada como STATIC em varios fontes),
+substituida pela HB_FUNC( SHAR ) abaixo:
+
+STATIC FUNCTION Shar( n, nBits )
+    LOCAL nDiv
+
+    IF nBits <= 0
+        RETURN n
+    ENDIF
+    nDiv := 2 ^ nBits
+    IF n >= 0
+        RETURN Int( n / nDiv )
+    ENDIF
+RETURN Int( ( n - nDiv + 1 ) / nDiv )
+*/
 #pragma BEGINDUMP
 #include "hbapi.h"
+#include "hbapiitm.h"
 
 HB_FUNC( HB_QBITAND )
 {
@@ -80,5 +98,23 @@ HB_FUNC( USHR )
       hb_retnint( 0 );
    else
       hb_retnint( n >> nBits );
+}
+
+/* Shar( n, nBits ): shift aritmetico (floor( n / 2^nBits )) em 64 bits */
+HB_FUNC( SHAR )
+{
+   int nBits = hb_parni( 2 );
+
+   if( nBits <= 0 )
+      hb_itemReturn( hb_param( 1, HB_IT_ANY ) );
+   else
+   {
+      HB_MAXINT n = hb_parnint( 1 );
+
+      if( nBits >= 63 )
+         hb_retnint( n < 0 ? -1 : 0 );
+      else
+         hb_retnint( n >> nBits );
+   }
 }
 #pragma ENDDUMP

@@ -200,17 +200,6 @@ STATIC FUNCTION NewMLine( nAx, nAy, nBx, nBy )
     ml:b:y := nBy
 RETURN ml
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
 STATIC FUNCTION FTOM( x )
 RETURN FixedMul( x * FRACUNIT, scale_ftom )
 

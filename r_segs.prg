@@ -66,18 +66,6 @@ STATIC maskedtexturecol
 
 
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
 STATIC FUNCTION AsU32( n )
 RETURN ( n & 0xFFFFFFFF )
 
@@ -295,7 +283,7 @@ PROCEDURE R_RenderSegLoop()
         ENDIF
 
         IF segtextured
-            angle := UShr( AsU32( rw_centerangle + xtoviewangle[ rw_x + 1 ] ), ;
+            angle := UShr( rw_centerangle + xtoviewangle[ rw_x + 1 ], ;
                            ANGLETOFINESHIFT )
             texturecolumn := rw_offset - FixedMul( FineTangentAt( angle ), rw_distance )
             texturecolumn := Shar( texturecolumn, FRACBITS )

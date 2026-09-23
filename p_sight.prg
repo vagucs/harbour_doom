@@ -41,18 +41,6 @@ INIT PROCEDURE init_p_sight
     sightcounts := { 0, 0 }
 RETURN
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
 FUNCTION P_DivlineSide( x, y, node )
     LOCAL dx
     LOCAL dy

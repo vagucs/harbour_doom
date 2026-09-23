@@ -100,18 +100,6 @@ INIT PROCEDURE init_p_map
     nSpechitBase := 0
 RETURN
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
 FUNCTION PIT_StompThing( thing )
     LOCAL blockdist
     MEMVAR gamemap

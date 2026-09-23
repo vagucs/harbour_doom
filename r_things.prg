@@ -50,21 +50,6 @@ STATIC vsprsortedhead
 
 
 
-STATIC FUNCTION Shar( n, nBits )
-    LOCAL nDiv
-
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-    nDiv := 2 ^ nBits
-    IF n >= 0
-        RETURN Int( n / nDiv )
-    ENDIF
-RETURN Int( ( n - nDiv + 1 ) / nDiv )
-
-STATIC FUNCTION AsU32( n )
-RETURN ( n & 0xFFFFFFFF )
-
 STATIC FUNCTION IfaceCall( xFun )
     IF xFun == NIL
         RETURN NIL
@@ -522,7 +507,7 @@ PROCEDURE R_ProjectSprite( thing )
 
     IF sprframe:rotate != 0
         ang := R_PointToAngle( thing:x, thing:y )
-        rot := UShr( AsU32( ang - thing:angle + Int( ANG45 / 2 ) * 9 ), 29 )
+        rot := UShr( ang - thing:angle + Int( ANG45 / 2 ) * 9, 29 )
         lump := sprframe:lump[ rot + 1 ]
         flip := sprframe:flip[ rot + 1 ] != 0
     ELSE
