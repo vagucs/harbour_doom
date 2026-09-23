@@ -355,6 +355,7 @@ FUNCTION M_ReadSaveStrings()
     LOCAL i
     LOCAL cName
     LOCAL cData
+    LOCAL nZ
 
     FOR i := 0 TO load_end - 1
         cName := P_SaveGameFile( i )
@@ -363,8 +364,13 @@ FUNCTION M_ReadSaveStrings()
             LoadMenu[ i + 1 ]:status := 0
             LOOP
         ENDIF
-        cData := hb_MemoRead( cName )
-        savegamestrings[ i + 1 ] := Left( cData, SAVESTRINGSIZE )
+        cData := Left( hb_MemoRead( cName ), SAVESTRINGSIZE )
+        /* o cabecalho completa o nome com Chr( 0 ); em C a string termina no primeiro zero */
+        nZ := At( Chr( 0 ), cData )
+        IF nZ > 0
+            cData := Left( cData, nZ - 1 )
+        ENDIF
+        savegamestrings[ i + 1 ] := cData
         LoadMenu[ i + 1 ]:status := 1
     NEXT
 RETURN NIL
