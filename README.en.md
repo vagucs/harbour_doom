@@ -211,6 +211,7 @@ Video runs **100% in Harbour** by default (palette and `I_FinishUpdate`). If tha
 | `-gfxmode rgba8888` | 32 bpp framebuffer (default when not CMAP256) |
 | `-gfxmode rgb565` | 16 bpp framebuffer |
 | `-fullscreen` | Try Allegro full-screen |
+| `-crt` | CRT monitor filter: tube curvature, scanlines, RGB phosphor mask and vignette. Works windowed and full-screen |
 
 Startup logs `I_InitGraphics: video path: Harbour` or `C`.
 

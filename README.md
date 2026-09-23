@@ -211,6 +211,7 @@ O vídeo roda **100% em Harbour** por padrão (paleta e `I_FinishUpdate`). Se fi
 | `-gfxmode rgba8888` | Framebuffer 32 bpp (padrão se não for CMAP256) |
 | `-gfxmode rgb565` | Framebuffer 16 bpp |
 | `-fullscreen` | Tenta tela cheia no Allegro |
+| `-crt` | Filtro de monitor CRT: curvatura do tubo, scanlines, máscara RGB de fósforo e vinheta. Funciona em janela e em tela cheia |
 
 Na inicialização o log mostra `I_InitGraphics: video path: Harbour` ou `C`.
 

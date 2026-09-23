@@ -103,6 +103,7 @@ STATIC PROCEDURE ParseVideoArgs()
     MEMVAR myargv
 
     s_fullscreen := iif( M_ParmExists( "-fullscreen" ), 1, 0 )
+    AlgSetCrt( M_ParmExists( "-crt" ) )
 
     p := M_CheckParmWithArgs( "-scaling", 1 )
     IF p > 0
@@ -241,7 +242,7 @@ FUNCTION DG_Init()
     OutStd( "Allegro video: " + hb_ntos( AlgScreenW() ) + "x" + ;
         hb_ntos( AlgScreenH() ) + iif( s_fullscreen != 0, " fullscreen", " windowed" ) + ;
         " (llibg/GTALLEG dest=" + hb_ntos( s_dest_w ) + "x" + ;
-        hb_ntos( s_dest_h ) + ")" + hb_eol() )
+        hb_ntos( s_dest_h ) + ")" + iif( AlgGetCrt(), " CRT filter", "" ) + hb_eol() )
 RETURN NIL
 
 FUNCTION DG_Fullscreen()
@@ -448,6 +449,7 @@ RETURN NIL
 #include "hbapiitm.h"
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define ALLEGRO_NO_KEY_DEFINES 1
 #include <allegro.h>
@@ -526,6 +528,291 @@ void timer_callback( void )
 }
 END_OF_FUNCTION( timer_callback );
 
+/*
+Filtro CRT (-crt): curvatura do tubo, scanlines, mascara RGB de fosforo,
+vinheta e leve borrao horizontal. A geometria (pixel de origem e ganho de
+cada pixel de saida) e pre-calculada em CrtBuild e so muda com o tamanho
+de saida; por quadro sobra uma consulta e tres multiplicacoes por pixel.
+*/
+#define CRT_SRC_PIXELS ( DOOMGENERIC_RESX * DOOMGENERIC_RESY )
+#define CRT_OUTSIDE    0xFFFFu
+
+static int s_crt = 0;
+static int s_crt_w = 0;
+static int s_crt_h = 0;
+static unsigned short *s_crt_map = NULL;
+static unsigned char *s_crt_gain = NULL;
+static unsigned int *s_crt_work = NULL;
+static int s_crt_work_n = 0;
+static BITMAP *s_crt_bmp = NULL;
+static int s_crt_mask[ 3 ][ 3 ];
+static unsigned int s_crt_rgb[ CRT_SRC_PIXELS ];
+static unsigned char s_crt_src8[ CRT_SRC_PIXELS ];
+static int s_crt_have_src = 0;
+
+static void CrtFree( void )
+{
+   free( s_crt_map );
+   free( s_crt_gain );
+   free( s_crt_work );
+   s_crt_map = NULL;
+   s_crt_gain = NULL;
+   s_crt_work = NULL;
+   s_crt_work_n = 0;
+   s_crt_w = 0;
+   s_crt_h = 0;
+   if( s_crt_bmp != NULL )
+   {
+      destroy_bitmap( s_crt_bmp );
+      s_crt_bmp = NULL;
+   }
+}
+
+static int CrtBuild( int dw, int dh )
+{
+   int x;
+   int y;
+   int m;
+   int c;
+   double sl_strength;
+   double boost;
+   double off;
+
+   if( dw < 1 || dh < 1 )
+      return 0;
+   if( s_crt_map != NULL && s_crt_w == dw && s_crt_h == dh )
+      return 1;
+
+   free( s_crt_map );
+   free( s_crt_gain );
+   s_crt_map = ( unsigned short * ) malloc( ( size_t ) dw * dh * sizeof( unsigned short ) );
+   s_crt_gain = ( unsigned char * ) malloc( ( size_t ) dw * dh );
+   if( s_crt_map == NULL || s_crt_gain == NULL )
+   {
+      free( s_crt_map );
+      free( s_crt_gain );
+      s_crt_map = NULL;
+      s_crt_gain = NULL;
+      s_crt_w = 0;
+      s_crt_h = 0;
+      return 0;
+   }
+   s_crt_w = dw;
+   s_crt_h = dh;
+
+   /* abaixo de 2 linhas de saida por linha do Doom as scanlines geram moire */
+   sl_strength = ( double ) dh / DOOMGENERIC_RESY - 1.0;
+   if( sl_strength < 0.0 )
+      sl_strength = 0.0;
+   if( sl_strength > 1.0 )
+      sl_strength = 1.0;
+   sl_strength *= 0.45;
+
+   for( y = 0; y < dh; y++ )
+   {
+      double ny = 2.0 * y / dh - 1.0;
+
+      for( x = 0; x < dw; x++ )
+      {
+         double nx = 2.0 * ( x + 0.5 ) / dw - 1.0;
+         double u = nx * ( 1.0 + ny * ny / 32.0 );
+         double v = ny * ( 1.0 + nx * nx / 24.0 );
+         size_t p = ( size_t ) y * dw + x;
+         double sx;
+         double sy;
+         double d;
+         double uu;
+         double vv;
+         double g;
+         int ix;
+         int iy;
+
+         if( u <= -1.0 || u >= 1.0 || v <= -1.0 || v >= 1.0 )
+         {
+            s_crt_map[ p ] = CRT_OUTSIDE;
+            s_crt_gain[ p ] = 0;
+            continue;
+         }
+
+         sx = ( u + 1.0 ) * 0.5 * DOOMGENERIC_RESX;
+         sy = ( v + 1.0 ) * 0.5 * DOOMGENERIC_RESY;
+         ix = ( int ) sx;
+         iy = ( int ) sy;
+         if( ix > DOOMGENERIC_RESX - 1 )
+            ix = DOOMGENERIC_RESX - 1;
+         if( iy > DOOMGENERIC_RESY - 1 )
+            iy = DOOMGENERIC_RESY - 1;
+
+         d = ( sy - iy ) - 0.5;
+         uu = ( u + 1.0 ) * 0.5;
+         vv = ( v + 1.0 ) * 0.5;
+         g = ( 1.0 - sl_strength * 4.0 * d * d )
+           * pow( 16.0 * uu * vv * ( 1.0 - uu ) * ( 1.0 - vv ), 0.12 ) * 255.0;
+         if( g < 0.0 )
+            g = 0.0;
+         if( g > 255.0 )
+            g = 255.0;
+
+         s_crt_map[ p ] = ( unsigned short ) ( iy * DOOMGENERIC_RESX + ix );
+         s_crt_gain[ p ] = ( unsigned char ) ( g + 0.5 );
+      }
+   }
+
+   /* mascara de fosforo so faz sentido com 2+ pixels de saida por pixel do Doom */
+   if( dw >= 2 * DOOMGENERIC_RESX )
+   {
+      off = 0.70;
+      boost = 1.40;
+   }
+   else
+   {
+      off = 1.0;
+      boost = 1.15;
+   }
+   for( m = 0; m < 3; m++ )
+      for( c = 0; c < 3; c++ )
+         s_crt_mask[ m ][ c ] = ( int ) ( 256.0 * boost * ( m == c ? 1.0 : off ) );
+
+   return 1;
+}
+
+static void CrtRender( const unsigned char *src, unsigned int *dst, int dw, int dh, int pitch )
+{
+   unsigned int lut[ 256 ];
+   int x;
+   int y;
+   int i;
+
+   for( i = 0; i < 256; i++ )
+      lut[ i ] = ( ( unsigned int ) colors[ i ].r << 16 )
+               | ( ( unsigned int ) colors[ i ].g << 8 )
+               | ( unsigned int ) colors[ i ].b;
+
+   for( y = 0; y < DOOMGENERIC_RESY; y++ )
+   {
+      const unsigned char *in = src + y * DOOMGENERIC_RESX;
+      unsigned int *out = s_crt_rgb + y * DOOMGENERIC_RESX;
+
+      for( x = 0; x < DOOMGENERIC_RESX; x++ )
+      {
+         unsigned int l = lut[ in[ x > 0 ? x - 1 : x ] ];
+         unsigned int c = lut[ in[ x ] ];
+         unsigned int r = lut[ in[ x < DOOMGENERIC_RESX - 1 ? x + 1 : x ] ];
+         unsigned int cr = ( ( ( l >> 16 ) & 255 ) + 2 * ( ( c >> 16 ) & 255 ) + ( ( r >> 16 ) & 255 ) ) >> 2;
+         unsigned int cg = ( ( ( l >> 8 ) & 255 ) + 2 * ( ( c >> 8 ) & 255 ) + ( ( r >> 8 ) & 255 ) ) >> 2;
+         unsigned int cb = ( ( l & 255 ) + 2 * ( c & 255 ) + ( r & 255 ) ) >> 2;
+         out[ x ] = ( cr << 16 ) | ( cg << 8 ) | cb;
+      }
+   }
+
+   for( y = 0; y < dh; y++ )
+   {
+      const unsigned short *map = s_crt_map + ( size_t ) y * dw;
+      const unsigned char *gain = s_crt_gain + ( size_t ) y * dw;
+      unsigned int *out = dst + ( size_t ) y * pitch;
+      int k = 0;
+
+      for( x = 0; x < dw; x++ )
+      {
+         unsigned int idx = map[ x ];
+
+         if( idx == CRT_OUTSIDE )
+            out[ x ] = 0;
+         else
+         {
+            unsigned int c = s_crt_rgb[ idx ];
+            int g = gain[ x ];
+            const int *mk = s_crt_mask[ k ];
+            int r = ( ( int ) ( ( c >> 16 ) & 255 ) * g * mk[ 0 ] ) >> 16;
+            int gr = ( ( int ) ( ( c >> 8 ) & 255 ) * g * mk[ 1 ] ) >> 16;
+            int b = ( ( int ) ( c & 255 ) * g * mk[ 2 ] ) >> 16;
+
+            if( r > 255 )
+               r = 255;
+            if( gr > 255 )
+               gr = 255;
+            if( b > 255 )
+               b = 255;
+            out[ x ] = ( ( unsigned int ) r << 16 ) | ( ( unsigned int ) gr << 8 ) | ( unsigned int ) b;
+         }
+         if( ++k == 3 )
+            k = 0;
+      }
+   }
+}
+
+static void CrtPresentWindowed( int dx, int dy, int dw, int dh )
+{
+   int x;
+   int y;
+   int depth;
+   int native32;
+
+   if( ! s_crt_have_src || ! CrtBuild( dw, dh ) )
+      return;
+
+   if( s_crt_bmp == NULL || s_crt_bmp->w != dw || s_crt_bmp->h != dh )
+   {
+      if( s_crt_bmp != NULL )
+         destroy_bitmap( s_crt_bmp );
+      s_crt_bmp = create_bitmap( dw, dh );
+      if( s_crt_bmp == NULL )
+         return;
+   }
+
+   if( s_crt_work == NULL || s_crt_work_n != dw * dh )
+   {
+      free( s_crt_work );
+      s_crt_work = ( unsigned int * ) malloc( ( size_t ) dw * dh * sizeof( unsigned int ) );
+      s_crt_work_n = s_crt_work != NULL ? dw * dh : 0;
+      if( s_crt_work == NULL )
+         return;
+   }
+
+   CrtRender( s_crt_src8, s_crt_work, dw, dh, dw );
+
+   depth = bitmap_color_depth( s_crt_bmp );
+   native32 = depth == 32 && makecol32( 255, 0, 0 ) == 0xFF0000
+              && makecol32( 0, 255, 0 ) == 0x00FF00 && makecol32( 0, 0, 255 ) == 0x0000FF;
+
+   for( y = 0; y < dh; y++ )
+   {
+      const unsigned int *in = s_crt_work + ( size_t ) y * dw;
+
+      if( native32 )
+         memcpy( s_crt_bmp->line[ y ], in, ( size_t ) dw * sizeof( unsigned int ) );
+      else if( depth == 32 )
+      {
+         unsigned int *out = ( unsigned int * ) s_crt_bmp->line[ y ];
+         for( x = 0; x < dw; x++ )
+            out[ x ] = ( unsigned int ) makecol32( ( in[ x ] >> 16 ) & 255, ( in[ x ] >> 8 ) & 255, in[ x ] & 255 );
+      }
+      else if( depth == 16 || depth == 15 )
+      {
+         unsigned short *out = ( unsigned short * ) s_crt_bmp->line[ y ];
+         for( x = 0; x < dw; x++ )
+            out[ x ] = ( unsigned short ) makecol_depth( depth, ( in[ x ] >> 16 ) & 255, ( in[ x ] >> 8 ) & 255, in[ x ] & 255 );
+      }
+      else
+      {
+         for( x = 0; x < dw; x++ )
+            putpixel( s_crt_bmp, x, y, makecol_depth( depth, ( in[ x ] >> 16 ) & 255, ( in[ x ] >> 8 ) & 255, in[ x ] & 255 ) );
+      }
+   }
+
+   alleg_present_bitmap( s_crt_bmp, dx, dy, dw, dh );
+}
+
+HB_FUNC( ALGSETCRT )
+{
+   s_crt = hb_parl( 1 ) ? 1 : 0;
+}
+
+HB_FUNC( ALGGETCRT )
+{
+   hb_retl( s_crt );
+}
+
 HB_FUNC( DG_ALLOCSCREEN )
 {
    if( DG_ScreenBuffer == NULL )
@@ -551,6 +838,7 @@ HB_FUNC( ALGEXIT )
 #ifdef ALLEGRO_WINDOWS
    AlgDestroyOverlay();
 #endif
+   CrtFree();
    if( temp_bitmap != NULL )
    {
       destroy_bitmap( temp_bitmap );
@@ -901,8 +1189,13 @@ static void AlgPresentOverlaySrc( const unsigned char *src, int dx, int dy, int 
 
    s_fs_dx = dx;
    s_fs_dy = dy;
-   AlgRebuildLut();
-   AlgScaleNN( src, s_fs_bits, dw, dh, s_fs_bw );
+   if( s_crt && CrtBuild( dw, dh ) )
+      CrtRender( src, s_fs_bits, dw, dh, s_fs_bw );
+   else
+   {
+      AlgRebuildLut();
+      AlgScaleNN( src, s_fs_bits, dw, dh, s_fs_bw );
+   }
 
    if( ! s_fs_bars )
    {
@@ -1295,6 +1588,12 @@ HB_FUNC( ALGSYNCFROMVID )
    if( src == NULL || hb_parclen( 1 ) < ( unsigned int ) ( DOOMGENERIC_RESX * DOOMGENERIC_RESY ) )
       return;
 
+   if( s_crt )
+   {
+      memcpy( s_crt_src8, src, CRT_SRC_PIXELS );
+      s_crt_have_src = 1;
+      return;
+   }
    AlgCopy8ToTemp( src );
 }
 
@@ -1303,6 +1602,12 @@ HB_FUNC( ALGSYNCFRAMEBUFFER )
    if( DG_ScreenBuffer == NULL )
       return;
 
+   if( s_crt )
+   {
+      memcpy( s_crt_src8, DG_ScreenBuffer, CRT_SRC_PIXELS );
+      s_crt_have_src = 1;
+      return;
+   }
    AlgCopy8ToTemp( ( unsigned char * ) DG_ScreenBuffer );
 }
 
@@ -1353,6 +1658,11 @@ HB_FUNC( ALGSTRETCHBLIT )
       return;
    }
 #endif
+   if( s_crt )
+   {
+      CrtPresentWindowed( dx, dy, dw, dh );
+      return;
+   }
    alleg_present_bitmap( temp_bitmap, dx, dy, dw, dh );
 }
 
