@@ -45,13 +45,6 @@ INIT PROCEDURE init_p_inter
     clipammo := { 10, 4, 20, 1 }
 RETURN
 
-STATIC FUNCTION UShr( n, nBits )
-    n := ( n & 0xFFFFFFFF )
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-RETURN Int( n / ( 2 ^ nBits ) )
-
 STATIC FUNCTION Shar( n, nBits )
     LOCAL nDiv
 

@@ -96,15 +96,6 @@ INIT PROCEDURE init_mus2mid
     NEXT
 RETURN
 
-STATIC FUNCTION UShr( n, nBits )
-    LOCAL i
-
-    n := ( n & 0xFFFFFFFF )
-    FOR i := 1 TO nBits
-        n := Int( n / 2 )
-    NEXT
-RETURN n
-
 STATIC FUNCTION WriteTime( nTime, midioutput )
     LOCAL nBuffer
     LOCAL nWriteval

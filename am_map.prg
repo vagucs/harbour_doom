@@ -200,13 +200,6 @@ STATIC FUNCTION NewMLine( nAx, nAy, nBx, nBy )
     ml:b:y := nBy
 RETURN ml
 
-STATIC FUNCTION UShr( n, nBits )
-    n := ( n & 0xFFFFFFFF )
-    IF nBits <= 0
-        RETURN n
-    ENDIF
-RETURN Int( n / ( 2 ^ nBits ) )
-
 STATIC FUNCTION Shar( n, nBits )
     LOCAL nDiv
     IF nBits <= 0
