@@ -1,5 +1,7 @@
 # doom_hb
 
+![DOOM rodando em Harbour com Allegro](screenshot/doom1.png)
+
 DOOM generic portado para Harbour, com interfaces mínimas em C para acesso ao Allegro 4.2.2.
 
 Por **Wagner Nunes da Silva**
