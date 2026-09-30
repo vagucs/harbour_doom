@@ -12,6 +12,7 @@ By **Wagner Nunes da Silva**
 - vagucs@vagucs.com.br
 - vagucs@gmail.com
 - [www.vagucs.com.br](https://www.vagucs.com.br)
+- [LinkedIn](https://www.linkedin.com/in/wagner-nunes-da-silva-b0a15360)
 
 Versão em português: [README.pt.md](README.pt.md)
 
@@ -433,6 +434,7 @@ Typical blit rate on the same PC (320×200, windowed, shareware IWAD). The game 
 | Python (`doom_python`) | ~8 |
 | PHP (`php_doom`) | ~20 |
 | Node (`node_doom`) | ~100 |
+| Java (`java_doom`) | ~180 (vsync-locked) |
 
 ---
 
