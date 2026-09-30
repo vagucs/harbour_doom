@@ -2,6 +2,8 @@
 
 ![DOOM rodando em Harbour com Allegro](screenshot/doom1.png)
 
+**Vídeo:** [DOOM rodando em Harbour/xBase](https://youtu.be/iigjFIW7peM)
+
 DOOM generic portado para Harbour, com interfaces mínimas em C para acesso ao Allegro 4.2.2.
 
 Por **Wagner Nunes da Silva**
@@ -421,6 +423,19 @@ O boot mínimo começa em **E1M1 / MAP01**, habilidade **Hurt Me Plenty** (`MINI
 
 ---
 
+## Desempenho
+
+Taxa típica de desenho no mesmo PC (320×200, janela, IWAD shareware). O jogo continua em 35 Hz (`TICRATE`); `-fps` mostra esse número.
+
+| Port | FPS típico |
+|---|---|
+| Harbour (`doom_hb`) | ~12 |
+| Python (`doom_python`) | ~8 |
+| PHP (`php_doom`) | ~20 |
+| Node (`node_doom`) | ~100 |
+
+---
+
 ## Teclas (padrão)
 
 Controles clássicos do DOOM. Dá para remapeá-los em `default.cfg` / `doom_hbdoom.cfg`.
@@ -518,6 +533,7 @@ O vídeo roda **100% em Harbour** por padrão (paleta e `I_FinishUpdate`). Se fi
 | `-fullscreen` | Tenta tela cheia no Allegro |
 | `-crt` | Filtro de monitor CRT: curvatura do tubo, scanlines, máscara RGB de fósforo e vinheta. Funciona em janela e em tela cheia |
 | `-fps` | Mostra os quadros por segundo no canto superior direito da tela |
+| `-colors N` | Quantiza o `PLAYPAL` para no máximo N cores distintas (2–256). Só o índice 0 é reservado; o resto usa farthest-point. Cinza quase neutro prefere alvo pouco saturado, para o chão não virar marrom. O resultado é escurecido em 5%. Vale também para as paletas de dano/bônus/radiação e para o gamma |
 
 Na inicialização o log mostra `I_InitGraphics: video path: Harbour` ou `C`.
 
