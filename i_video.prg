@@ -205,9 +205,17 @@ FUNCTION I_InitGraphics()
         s_video_hb := .F.
     ENDIF
     s_showfps := M_ParmExists( "-fps" )
+    i := M_CheckParmWithArgs( "-colors", 1 )
+    IF i > 0
+        IVideoSetMaxColors( Int( Val( myargv[ i + 1 + 1 ] ) ) )
+    ENDIF
     OutStd( "I_InitGraphics: video path: " + iif( s_video_hb, "Harbour", "C" ) + hb_eol() )
     IF s_showfps
         OutStd( "I_InitGraphics: FPS overlay: on" + hb_eol() )
+    ENDIF
+    IF IVideoGetMaxColors() < 256
+        OutStd( "I_InitGraphics: palette quantized to " + ;
+            hb_ntos( IVideoGetMaxColors() ) + " colors" + hb_eol() )
     ENDIF
 
     i := M_CheckParmWithArgs( "-scaling", 1 )
@@ -500,6 +508,187 @@ extern unsigned char *DG_ScreenBuffer;
 boolean palette_changed;
 struct color colors[ 256 ];
 
+static int s_max_colors = 256;
+
+static int ColorDist2( int r1, int g1, int b1, int r2, int g2, int b2 )
+{
+   int dr = r1 - r2;
+   int dg = g1 - g2;
+   int db = b1 - b2;
+
+   return dr * dr + dg * dg + db * db;
+}
+
+/* 0..2550, peso maior no verde (aproxima luminance) */
+static int ColorLum( int r, int g, int b )
+{
+   return r * 3 + g * 6 + b;
+}
+
+static int AddFarthest( const unsigned char *src_r, const unsigned char *src_g,
+                        const unsigned char *src_b, int *pal_r, int *pal_g,
+                        int *pal_b, int nChosen, int nWant, int nMaxLum )
+{
+   int i;
+   int k;
+   int d;
+   int min_d;
+   int best_i;
+   int best_d;
+
+   while( nChosen < nWant )
+   {
+      best_i = -1;
+      best_d = -1;
+      for( i = 1; i < 256; i++ )
+      {
+         if( nMaxLum >= 0 && ColorLum( src_r[ i ], src_g[ i ], src_b[ i ] ) > nMaxLum )
+            continue;
+         min_d = 0x7fffffff;
+         for( k = 0; k < nChosen; k++ )
+         {
+            d = ColorDist2( src_r[ i ], src_g[ i ], src_b[ i ],
+                            pal_r[ k ], pal_g[ k ], pal_b[ k ] );
+            if( d < min_d )
+               min_d = d;
+         }
+         if( min_d > best_d )
+         {
+            best_d = min_d;
+            best_i = i;
+         }
+      }
+      if( best_i < 0 || best_d <= 0 )
+         break;
+      pal_r[ nChosen ] = src_r[ best_i ];
+      pal_g[ nChosen ] = src_g[ best_i ];
+      pal_b[ nChosen ] = src_b[ best_i ];
+      nChosen++;
+   }
+   return nChosen;
+}
+
+static int ColorSat( int r, int g, int b )
+{
+   int mx = r;
+   int mn = r;
+
+   if( g > mx )
+      mx = g;
+   if( b > mx )
+      mx = b;
+   if( g < mn )
+      mn = g;
+   if( b < mn )
+      mn = b;
+   return mx - mn;
+}
+
+/* Reduz colors[] a no maximo nWant RGBs distintos.
+   So o indice 0 (preto / transparencia) e reservado; o resto e
+   farthest-point no PLAYPAL inteiro. Sem cota extra de pretos:
+   cinza de chao/teto nao e puxado para o preto. Cinza quase
+   neutro prefere alvo pouco saturado, para nao virar marrom. */
+static void QuantizeColors( int nWant )
+{
+   unsigned char src_r[ 256 ];
+   unsigned char src_g[ 256 ];
+   unsigned char src_b[ 256 ];
+   int pal_r[ 256 ];
+   int pal_g[ 256 ];
+   int pal_b[ 256 ];
+   int nChosen;
+   int i;
+   int k;
+   int best_i;
+   int best_d;
+   int d;
+   int src_lum;
+   int src_sat;
+   int lift;
+   int sat_d;
+
+   if( nWant < 2 )
+      nWant = 2;
+   if( nWant >= 256 )
+      return;
+
+   for( i = 0; i < 256; i++ )
+   {
+      src_r[ i ] = colors[ i ].r;
+      src_g[ i ] = colors[ i ].g;
+      src_b[ i ] = colors[ i ].b;
+   }
+
+   pal_r[ 0 ] = src_r[ 0 ];
+   pal_g[ 0 ] = src_g[ 0 ];
+   pal_b[ 0 ] = src_b[ 0 ];
+   nChosen = AddFarthest( src_r, src_g, src_b, pal_r, pal_g, pal_b,
+                          1, nWant, -1 );
+
+   for( i = 0; i < 256; i++ )
+   {
+      src_lum = ColorLum( src_r[ i ], src_g[ i ], src_b[ i ] );
+      src_sat = ColorSat( src_r[ i ], src_g[ i ], src_b[ i ] );
+      best_i = 0;
+      best_d = 0x7fffffff;
+      for( k = 0; k < nChosen; k++ )
+      {
+         d = ColorDist2( src_r[ i ], src_g[ i ], src_b[ i ],
+                         pal_r[ k ], pal_g[ k ], pal_b[ k ] );
+         lift = ColorLum( pal_r[ k ], pal_g[ k ], pal_b[ k ] ) - src_lum;
+         /* so quase-preto: cinza de chao usa vizinho RGB */
+         if( src_lum <= 250 && lift > 240 )
+            d += ( lift * lift ) / 16;
+         sat_d = ColorSat( pal_r[ k ], pal_g[ k ], pal_b[ k ] ) - src_sat;
+         if( src_sat <= 24 && sat_d > 16 )
+            d += sat_d * sat_d;
+         if( d < best_d )
+         {
+            best_d = d;
+            best_i = k;
+            if( d == 0 )
+               break;
+         }
+      }
+      /* 5% mais escuro: o farthest-point tende a privilegiar midtones claros */
+      colors[ i ].r = ( unsigned char ) ( ( pal_r[ best_i ] * 95 ) / 100 );
+      colors[ i ].g = ( unsigned char ) ( ( pal_g[ best_i ] * 95 ) / 100 );
+      colors[ i ].b = ( unsigned char ) ( ( pal_b[ best_i ] * 95 ) / 100 );
+      /* verde-oliva (19,34,11): mais escuro e puxado ao cinza do chao */
+      if( ColorDist2( pal_r[ best_i ], pal_g[ best_i ], pal_b[ best_i ], 19, 34, 11 ) <= 625 )
+      {
+         int nR = colors[ i ].r;
+         int nG = colors[ i ].g;
+         int nB = colors[ i ].b;
+         int nGray = ( ( nR + nG + nB ) / 3 * 85 ) / 100;
+
+         nR = ( nR + nGray * 2 ) / 3;
+         nG = ( nG + nGray * 2 ) / 3;
+         nB = ( nB + nGray * 2 ) / 3;
+         colors[ i ].r = ( unsigned char ) nR;
+         colors[ i ].g = ( unsigned char ) nG;
+         colors[ i ].b = ( unsigned char ) nB;
+      }
+   }
+}
+
+HB_FUNC( IVIDEOSETMAXCOLORS )
+{
+   int n = hb_parni( 1 );
+
+   if( n < 2 )
+      n = 2;
+   if( n > 256 )
+      n = 256;
+   s_max_colors = n;
+}
+
+HB_FUNC( IVIDEOGETMAXCOLORS )
+{
+   hb_retni( s_max_colors );
+}
+
 HB_FUNC( IVIDEOSETPALETTE )
 {
    const byte *palette;
@@ -518,6 +707,7 @@ HB_FUNC( IVIDEOSETPALETTE )
       colors[ i ].g = (byte) hb_arrayGetNI( pGamma, ( HB_USHORT ) *palette++ + 1 );
       colors[ i ].b = (byte) hb_arrayGetNI( pGamma, ( HB_USHORT ) *palette++ + 1 );
    }
+   QuantizeColors( s_max_colors );
 #ifdef CMAP256
    palette_changed = 1;
 #endif
@@ -539,6 +729,7 @@ HB_FUNC( IVIDEOSETPALETTERAW )
       colors[ i ].b = *p++;
       colors[ i ].a = 0;
    }
+   QuantizeColors( s_max_colors );
 #ifdef CMAP256
    palette_changed = 1;
 #endif

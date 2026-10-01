@@ -43,9 +43,8 @@ STATIC pagetic
 #include "d_loop.ch"
 #include "d_main.ch"
 
-#ifndef DEH_String
-#define DEH_String( x ) ( x )
-#endif
+#include "doomfeatures.ch"
+#include "deh_main.ch"
 
 #ifndef PACKAGE_STRING
 #define PACKAGE_STRING "doom_hb 0.1"
@@ -219,8 +218,7 @@ STATIC FUNCTION DehPrint( cText )
 RETURN NIL
 
 STATIC FUNCTION DehAddStringReplacement( x, y )
-    HB_SYMBOL_UNUSED( x )
-    HB_SYMBOL_UNUSED( y )
+    DEH_AddStringReplacement( x, y )
 RETURN NIL
 
 FUNCTION D_ProcessEvents()
@@ -277,8 +275,13 @@ FUNCTION D_Display()
     ENDIF
 
     IF gamestate != wipegamestate
-        wipe := .T.
-        wipe_StartScreen( 0, 0, SCREENWIDTH, SCREENHEIGHT )
+        IF gamestate == GS_LEVEL .AND. gametic == 0
+            wipe := .F.
+            wipegamestate := gamestate
+        ELSE
+            wipe := .T.
+            wipe_StartScreen( 0, 0, SCREENWIDTH, SCREENHEIGHT )
+        ENDIF
     ELSE
         wipe := .F.
     ENDIF
@@ -474,7 +477,11 @@ FUNCTION doomgeneric_Tick()
     MEMVAR screenvisible
     I_StartFrame()
     TryRunTics()
-    S_UpdateSounds( players[ consoleplayer + 1 ]:mo )
+    IF players[ consoleplayer + 1 ]:mo != NIL
+        S_UpdateSounds( players[ consoleplayer + 1 ]:mo )
+    ELSE
+        S_UpdateSounds( NIL )
+    ENDIF
     IF screenvisible
         D_Display()
     ENDIF
@@ -530,6 +537,9 @@ RETURN NIL
 
 FUNCTION D_PageDrawer()
     MEMVAR pagename
+    IF Empty( pagename )
+        RETURN NIL
+    ENDIF
     V_DrawPatch( 0, 0, W_CacheLumpName( pagename, PU_CACHE ) )
 RETURN NIL
 
@@ -555,10 +565,14 @@ FUNCTION D_DoAdvanceDemo()
     paused := .F.
     gameaction := ga_nothing
 
+    // Harbour SWITCH only accepts integers; `%` yields a float and raises BASE/3104.
+    demosequence := Int( demosequence ) + 1
     IF gameversion == exe_ultimate .OR. gameversion == exe_final
-        demosequence := ( demosequence + 1 ) % 7
-    ELSE
-        demosequence := ( demosequence + 1 ) % 6
+        IF demosequence >= 7
+            demosequence := 0
+        ENDIF
+    ELSEIF demosequence >= 6
+        demosequence := 0
     ENDIF
 
     SWITCH demosequence
@@ -624,9 +638,13 @@ RETURN NIL
 
 FUNCTION D_StartTitle()
     MEMVAR gameaction
+    MEMVAR gamestate
+    MEMVAR wipegamestate
     gameaction := ga_nothing
     demosequence := -1
     D_AdvanceDemo()
+    D_DoAdvanceDemo()
+    wipegamestate := gamestate
 RETURN NIL
 
 STATIC FUNCTION GetGameName( gamename )
@@ -839,20 +857,12 @@ FUNCTION PrintGameVersion()
 RETURN NIL
 
 STATIC FUNCTION D_Endoom()
-    LOCAL endoom
-    MEMVAR screensaver_mode
-
-    IF ! show_endoom .OR. ! main_loop_started ;
-         .OR. screensaver_mode .OR. M_CheckParm( "-testcontrols" ) > 0
-        RETURN NIL
-    ENDIF
-
-    endoom := W_CacheLumpName( DEH_String( "ENDOOM" ), PU_STATIC )
-    I_Endoom( endoom )
-    QUIT
+    // ENDOOM is a DOS text-mode exit screen; this port has no console
+    // display for it (I_Endoom is a stub). Skip it so I_Quit does not
+    // hit Harbour BASE/1066: show_endoom is an INT (1), and "!" requires
+    // a logical.
 RETURN NIL
 
-#ifdef ORIGCODE
 STATIC FUNCTION LoadIwadDeh()
     LOCAL chex_deh
     LOCAL sep
@@ -895,7 +905,6 @@ STATIC FUNCTION LoadIwadDeh()
         ENDIF
     ENDIF
 RETURN NIL
-#endif
 
 FUNCTION D_DoomMain()
     LOCAL p
@@ -934,9 +943,8 @@ FUNCTION D_DoomMain()
     MEMVAR startskill
     MEMVAR testcontrols
     MEMVAR timelimit
-#ifdef ORIGCODE
     LOCAL numiwadlumps
-#endif
+    LOCAL loaded
 
     I_AtExit( {|| D_Endoom() }, .F. )
 
@@ -1038,20 +1046,16 @@ FUNCTION D_DoomMain()
 
     DehPrint( "W_Init: Init WADfiles." + hb_eol() )
     D_AddFile( iwadfile )
-#ifdef ORIGCODE
     numiwadlumps := numlumps
-#endif
 
     W_CheckCorrectIWAD( doom )
 
     D_IdentifyVersion()
     InitGameVersion()
 
-#ifdef ORIGCODE
     IF ! M_ParmExists( "-nodeh" )
         LoadIwadDeh()
     ENDIF
-#endif
 
     IF W_CheckNumForName( "dmenupic" ) >= 0
         OutStd( "BFG Edition: Using workarounds as needed." + hb_eol() )
@@ -1095,18 +1099,16 @@ FUNCTION D_DoomMain()
 
     W_GenerateHashTable()
 
-#ifdef ORIGCODE
     IF M_ParmExists( "-dehlump" )
-        LOCAL loaded := 0
+        loaded := 0
         FOR i := numiwadlumps TO numlumps - 1
-            IF Left( lumpinfo[ i + 1 ]:name, 8 ) == "DEHACKED"
+            IF hb_stricmp( AllTrim( lumpinfo[ i + 1 ]:name ), "DEHACKED" ) == 0
                 DEH_LoadLump( i, .F., .F. )
                 loaded := loaded + 1
             ENDIF
         NEXT
         OutStd( "  loaded " + hb_ntos( loaded ) + " DEHACKED lumps from PWAD files." + hb_eol() )
     ENDIF
-#endif
 
     D_SetGameDescription()
 

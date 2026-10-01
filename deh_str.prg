@@ -19,39 +19,68 @@ www.vagucs.com.br
 
 #include "deh_str.ch"
 
-#undef DEH_String
-#undef DEH_AddStringReplacement
+STATIC deh_replacements := {}
+
+INIT PROCEDURE init_deh_str
+    deh_replacements := {}
+RETURN
 
 FUNCTION DEH_String( s )
-    /* Sem tabela de replacement neste port; identidade. */
+    LOCAL i
+    LOCAL nFrom
+    LOCAL nTo
+
+    IF s == NIL
+        RETURN s
+    ENDIF
+    FOR i := 1 TO Len( deh_replacements )
+        nFrom := deh_replacements[ i, 1 ]
+        nTo := deh_replacements[ i, 2 ]
+        IF nFrom == s
+            RETURN nTo
+        ENDIF
+    NEXT
 RETURN s
 
 FUNCTION DEH_AddStringReplacement( from_text, to_text )
-    HB_SYMBOL_UNUSED( from_text )
-    HB_SYMBOL_UNUSED( to_text )
+    LOCAL i
+
+    IF from_text == NIL .OR. to_text == NIL
+        RETURN NIL
+    ENDIF
+    FOR i := 1 TO Len( deh_replacements )
+        IF deh_replacements[ i, 1 ] == from_text
+            deh_replacements[ i, 2 ] := to_text
+            RETURN NIL
+        ENDIF
+    NEXT
+    AAdd( deh_replacements, { from_text, to_text } )
 RETURN NIL
 
 FUNCTION DEH_printf( cText )
     IF cText != NIL
-        OutStd( cText )
+        OutStd( DEH_String( cText ) )
     ENDIF
 RETURN NIL
 
 FUNCTION DEH_fprintf( xHandle, cText )
+    LOCAL cOut
+
     IF cText == NIL
         RETURN NIL
     ENDIF
+    cOut := DEH_String( cText )
     IF ValType( xHandle ) == "N"
-        FWrite( xHandle, cText )
+        FWrite( xHandle, cOut )
     ELSE
-        OutStd( cText )
+        OutStd( cOut )
     ENDIF
 RETURN NIL
 
 FUNCTION DEH_snprintf( buffer, nLen, cText )
     LOCAL cOut
 
-    cOut := iif( cText == NIL, "", cText )
+    cOut := DEH_String( iif( cText == NIL, "", cText ) )
     IF ValType( nLen ) == "N" .AND. nLen > 0
         cOut := Left( cOut, nLen - 1 )
     ENDIF

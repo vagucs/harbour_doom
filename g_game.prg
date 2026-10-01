@@ -66,6 +66,9 @@ STATIC levelstarttic
 #include "deh_main.ch"
 #include "deh_misc.ch"
 #include "d_englsh.ch"
+
+MEMVAR deh_initial_health
+MEMVAR deh_initial_bullets
 #include "doomstat.ch"
 #include "doomkeys.ch"
 #include "g_game.ch"

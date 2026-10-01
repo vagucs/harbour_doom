@@ -17,8 +17,6 @@ www.vagucs.com.br
 #translate ( <exp1> & <exp2> )      => ( hb_qbitAnd( ( <exp1> ), ( <exp2> ) ) )
 #translate ( <exp1> ^^ <exp2> )     => ( hb_qbitXor( ( <exp1> ), ( <exp2> ) ) )
 
-STATIC clipammo
-
 #include "p_inter.ch"
 #include "p_local.ch"
 #include "p_mobj.ch"
@@ -26,6 +24,15 @@ STATIC clipammo
 #include "deh_str.ch"
 #include "deh_misc.ch"
 #include "doomstat.ch"
+
+MEMVAR deh_green_armor_class
+MEMVAR deh_blue_armor_class
+MEMVAR deh_max_health
+MEMVAR deh_max_armor
+MEMVAR deh_soulsphere_health
+MEMVAR deh_max_soulsphere
+MEMVAR deh_megasphere_health
+MEMVAR clipammo
 #include "info.ch"
 #include "d_items.ch"
 #include "doomdef.ch"
@@ -41,6 +48,7 @@ STATIC clipammo
 
 INIT PROCEDURE init_p_inter
     PUBLIC maxammo
+    PUBLIC clipammo
     maxammo  := { 200, 50, 300, 50 }
     clipammo := { 10, 4, 20, 1 }
 RETURN

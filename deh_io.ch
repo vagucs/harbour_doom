@@ -9,15 +9,7 @@ vagucs@gmail.com
 
 www.vagucs.com.br
 */
-#ifndef DEH_STR_H
-#define DEH_STR_H
-
-#include "doomfeatures.ch"
-
-#ifdef FEATURE_DEHACKED
-#else
-#define DEH_String( x ) ( x )
-#define DEH_AddStringReplacement( x, y )
-#endif
+#ifndef DEH_IO_H
+#define DEH_IO_H
 
 #endif

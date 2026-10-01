@@ -18,10 +18,9 @@ www.vagucs.com.br
 #translate ( <exp1> ^^ <exp2> )     => ( hb_qbitXor( ( <exp1> ), ( <exp2> ) ) )
 
 #include "deh_misc.ch"
+#include "deh_main.ch"
 
-#ifdef FEATURE_DEHACKED
 INIT PROCEDURE init_deh_misc
-
     PUBLIC deh_initial_health
     PUBLIC deh_initial_bullets
     PUBLIC deh_max_health
@@ -56,4 +55,80 @@ INIT PROCEDURE init_deh_misc
     deh_bfg_cells_per_shot  := DEH_DEFAULT_BFG_CELLS_PER_SHOT
     deh_species_infighting  := DEH_DEFAULT_SPECIES_INFIGHTING
 RETURN
-#endif
+
+FUNCTION DEH_MiscStart( oCtx, cLine )
+    HB_SYMBOL_UNUSED( oCtx )
+    HB_SYMBOL_UNUSED( cLine )
+RETURN NIL
+
+FUNCTION DEH_MiscParseLine( oCtx, cLine, xTag )
+    LOCAL aAsg
+    LOCAL nVal
+    MEMVAR deh_initial_health
+    MEMVAR deh_initial_bullets
+    MEMVAR deh_max_health
+    MEMVAR deh_max_armor
+    MEMVAR deh_green_armor_class
+    MEMVAR deh_blue_armor_class
+    MEMVAR deh_max_soulsphere
+    MEMVAR deh_soulsphere_health
+    MEMVAR deh_megasphere_health
+    MEMVAR deh_god_mode_health
+    MEMVAR deh_idfa_armor
+    MEMVAR deh_idfa_armor_class
+    MEMVAR deh_idkfa_armor
+    MEMVAR deh_idkfa_armor_class
+    MEMVAR deh_bfg_cells_per_shot
+    MEMVAR deh_species_infighting
+
+    HB_SYMBOL_UNUSED( xTag )
+    aAsg := DEH_ParseAssignment( cLine )
+    IF aAsg == NIL
+        DEH_Warning( oCtx, "Failed to parse assignment" )
+        RETURN NIL
+    ENDIF
+    nVal := Int( Val( aAsg[ 2 ] ) )
+    IF hb_stricmp( aAsg[ 1 ], "Monsters Infight" ) == 0
+        IF nVal == 202
+            deh_species_infighting := 0
+        ELSEIF nVal == 221
+            deh_species_infighting := 1
+        ELSE
+            DEH_Warning( oCtx, "Invalid value for 'Monsters Infight': " + hb_ntos( nVal ) )
+        ENDIF
+        RETURN NIL
+    ENDIF
+    IF hb_stricmp( aAsg[ 1 ], "Initial Health" ) == 0
+        deh_initial_health := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "Initial Bullets" ) == 0
+        deh_initial_bullets := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "Max Health" ) == 0
+        deh_max_health := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "Max Armor" ) == 0
+        deh_max_armor := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "Green Armor Class" ) == 0
+        deh_green_armor_class := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "Blue Armor Class" ) == 0
+        deh_blue_armor_class := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "Max Soulsphere" ) == 0
+        deh_max_soulsphere := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "Soulsphere Health" ) == 0
+        deh_soulsphere_health := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "Megasphere Health" ) == 0
+        deh_megasphere_health := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "God Mode Health" ) == 0
+        deh_god_mode_health := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "IDFA Armor" ) == 0
+        deh_idfa_armor := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "IDFA Armor Class" ) == 0
+        deh_idfa_armor_class := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "IDKFA Armor" ) == 0
+        deh_idkfa_armor := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "IDKFA Armor Class" ) == 0
+        deh_idkfa_armor_class := nVal
+    ELSEIF hb_stricmp( aAsg[ 1 ], "BFG Cells/Shot" ) == 0
+        deh_bfg_cells_per_shot := nVal
+    ELSE
+        DEH_Warning( oCtx, "Unknown Misc variable '" + aAsg[ 1 ] + "'" )
+    ENDIF
+RETURN NIL

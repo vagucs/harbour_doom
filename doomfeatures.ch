@@ -13,7 +13,7 @@ www.vagucs.com.br
 #define DOOM_FEATURES_H
 
 #undef FEATURE_WAD_MERGE
-#undef FEATURE_DEHACKED
+#define FEATURE_DEHACKED 1
 #undef FEATURE_MULTIPLAYER
 #define FEATURE_SOUND 1
 

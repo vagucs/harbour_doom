@@ -44,6 +44,9 @@ STATIC crushchange
 STATIC nofit
 
 #include "p_map.ch"
+#include "deh_misc.ch"
+
+MEMVAR deh_species_infighting
 
 
 INIT PROCEDURE init_p_map

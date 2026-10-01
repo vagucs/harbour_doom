@@ -12,11 +12,11 @@ www.vagucs.com.br
 #ifndef DEH_MAIN_H
 #define DEH_MAIN_H
 
-/* Original: doomtype.h, doomfeatures.h, deh_str.h, sha1.h */
+#include "doomfeatures.ch"
 #include "deh_str.ch"
 
 #define DEH_VANILLA_NUMSTATES 966
 #define DEH_VANILLA_NUMSFX    107
-
+#define MAX_CHEAT_LEN         25
 
 #endif

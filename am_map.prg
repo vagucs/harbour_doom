@@ -1197,3 +1197,6 @@ PROCEDURE AM_Drawer()
     AM_drawMarks()
     V_MarkRect( f_x, f_y, f_w, f_h )
 RETURN
+
+FUNCTION AM_DehCheatAmap()
+RETURN cheat_amap

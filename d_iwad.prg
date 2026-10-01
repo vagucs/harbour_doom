@@ -40,9 +40,7 @@ CLASS iwad_t
     METHOD New()
 ENDCLASS
 
-#ifndef DEH_String
-#define DEH_String( x ) ( x )
-#endif
+#include "deh_str.ch"
 
 #ifndef FILES_DIR
 #define FILES_DIR "."

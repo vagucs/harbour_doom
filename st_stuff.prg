@@ -85,6 +85,12 @@ STATIC cheat_mypos
 #include "dstrings.ch"
 #include "deh_main.ch"
 #include "deh_misc.ch"
+
+MEMVAR deh_god_mode_health
+MEMVAR deh_idfa_armor
+MEMVAR deh_idfa_armor_class
+MEMVAR deh_idkfa_armor
+MEMVAR deh_idkfa_armor_class
 #include "m_cheat.ch"
 #include "z_zone.ch"
 #include "i_video.ch"
@@ -972,3 +978,43 @@ INIT PROCEDURE init_st_stuff
     cheat_clev := CHEAT( "idclev", 2 )
     cheat_mypos := CHEAT( "idmypos", 0 )
 RETURN
+
+FUNCTION DEH_FindCheat( cName )
+    cName := Lower( AllTrim( cName ) )
+    DO CASE
+    CASE cName == "change music"
+        RETURN cheat_mus
+    CASE cName == "chainsaw"
+        RETURN cheat_choppers
+    CASE cName == "god mode"
+        RETURN cheat_god
+    CASE cName == "ammo & keys"
+        RETURN cheat_ammo
+    CASE cName == "ammo"
+        RETURN cheat_ammonokey
+    CASE cName == "no clipping 1"
+        RETURN cheat_noclip
+    CASE cName == "no clipping 2"
+        RETURN cheat_commercial_noclip
+    CASE cName == "invincibility"
+        RETURN cheat_powerup[ 1 ]
+    CASE cName == "berserk"
+        RETURN cheat_powerup[ 2 ]
+    CASE cName == "invisibility"
+        RETURN cheat_powerup[ 3 ]
+    CASE cName == "radiation suit"
+        RETURN cheat_powerup[ 4 ]
+    CASE cName == "auto-map"
+        RETURN cheat_powerup[ 5 ]
+    CASE cName == "lite-amp goggles"
+        RETURN cheat_powerup[ 6 ]
+    CASE cName == "behold menu"
+        RETURN cheat_powerup[ 7 ]
+    CASE cName == "level warp"
+        RETURN cheat_clev
+    CASE cName == "player position"
+        RETURN cheat_mypos
+    CASE cName == "map cheat"
+        RETURN AM_DehCheatAmap()
+    ENDCASE
+RETURN NIL

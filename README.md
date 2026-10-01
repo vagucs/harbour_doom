@@ -14,6 +14,8 @@ By **Wagner Nunes da Silva**
 - [www.vagucs.com.br](https://www.vagucs.com.br)
 - [LinkedIn](https://www.linkedin.com/in/wagner-nunes-da-silva-b0a15360)
 
+Same engine in other languages: [harbour_doom](https://github.com/vagucs/harbour_doom) · [python_doom](https://github.com/vagucs/python_doom) · [php_doom](https://github.com/vagucs/php_doom) · [node_doom](https://github.com/vagucs/node_doom) · [java_doom](https://github.com/vagucs/java_doom)
+
 Versão em português: [README.pt.md](README.pt.md)
 
 ---
@@ -54,7 +56,28 @@ Suggested way to study:
 
 ## From C to Harbour: conversion guide
 
-### Conversion table
+### Ports (same engine)
+
+The table below is the same six-language comparison used in every `*_doom` README:
+
+| DOOM in C                   | [Harbour](https://github.com/vagucs/harbour_doom) | [Python](https://github.com/vagucs/python_doom) | [PHP](https://github.com/vagucs/php_doom) | [Node](https://github.com/vagucs/node_doom) | [Java](https://github.com/vagucs/java_doom) |
+| --------------------------- | ------------------------------------------------- | ----------------------------------------------- | ---------------------------------------- | ------------------------------------------- | ------------------------------------------- |
+| `struct` / `typedef struct` | `CLASS ... DATA`                                  | `@dataclass`                                    | `class` + typed properties               | `class` + typed fields                      | `class` + fields                            |
+| `thing->x`                  | `thing:x`                                         | `thing.x`                                       | `$thing->x`                              | `thing.x`                                   | `thing.x`                                   |
+| `NULL`                      | `NIL`                                             | `None`                                          | `null`                                   | `null`                                      | `null`                                      |
+| `array[0]`                  | `array[1]`                                        | `array[0]`                                      | `$array[0]`                              | `array[0]`                                  | `array[0]`                                  |
+| `&`, `|`, `^`               | `hb_qbitAnd/Or/Xor`                               | `&`, `|`, `^`                                   | `&`, `|`, `^`                            | `&`, `|`, `^`                               | `&`, `|`, `^`                               |
+| `x >> n` unsigned           | `UShr(x, n)`                                      | `ushr(x, n)`                                    | `Compat::ushr($x, $n)`                   | `ushr(x, n)`                                | `Compat.ushr` / `>>>`                       |
+| `x >> n` signed             | `Shar(x, n)`                                      | `shar(x, n)`                                    | `Compat::shar($x, $n)`                   | `shar(x, n)`                                | `Compat.shar` / `>>`                        |
+| 32-bit wrap                 | `AsU32` / `AsInt32`                               | `as_u32` / `as_i32`                             | `Compat::asU32` / `asI32`                | `asU32` / `asI32`                           | `int` already wraps                         |
+| `fixed_t` 16.16             | `FixedMul` / `FixedDiv`                           | `fixed_mul` / `fixed_div`                       | `Compat::fixedMul` / `fixedDiv`          | `fixedMul` / `fixedDiv` (BigInt)            | `fixedMul` / `fixedDiv` (`long`)            |
+| `byte *` framebuffer        | Harbour string                                    | `bytearray` + numpy LUT                         | `array<int>` + SDL ARGB8888              | `Uint8Array` + SDL ARGB8888                 | `int[]` + SDL ARGB8888                      |
+| Allegro 4.2.2               | GTALLEG / llibg                                   | pygame                                          | SDL2 via FFI                             | SDL2 via koffi                              | SDL2 via JNA                                |
+| `Z_Malloc`                  | GC                                                | GC                                              | GC                                       | GC                                          | GC                                          |
+| `PUBLIC` globals            | `PUBLIC` / `MEMVAR`                               | fields on `Game`                                | public fields on `Game`                  | public fields on `Game`                     | public fields on `Game`                     |
+| 100+ `.prg` files           | 1:1 with C                                        | condensed `doom/*.py`                           | condensed `src/*.php`                    | condensed `src/*.ts`                        | condensed `src/doom/*.java`                 |
+
+### Conversion table (C → Harbour)
 
 | DOOM in C | Harbour DOOM | Notes |
 |---|---|---|
@@ -431,7 +454,7 @@ Typical blit rate on the same PC (320×200, windowed, shareware IWAD). The game 
 | Port | Typical FPS |
 |---|---|
 | Harbour (`doom_hb`) | ~12 |
-| Python (`doom_python`) | ~8 |
+| Python (`python_doom`) | ~8 |
 | PHP (`php_doom`) | ~20 |
 | Node (`node_doom`) | ~100 |
 | Java (`java_doom`) | ~180 (vsync-locked) |
@@ -502,12 +525,20 @@ Classic DOOM controls. They can be remapped in `default.cfg` / `doom_hbdoom.cfg`
 
 ### Cheats (nostalgia only)
 
-Type these on the keyboard during play; no Enter needed:
+Type these on the keyboard during play; no Enter needed. On Nightmare skill only **IDCLEV** and **IDDT** work (vanilla).
 
 | Code | Effect |
 |---|---|
 | **IDDQD** | God mode (*Degreelessness Mode*) |
 | **IDKFA** | All weapons, ammo, keys, and armor |
+| **IDFA** | Weapons, ammo, and armor (no keys) |
+| **IDCLIP** / **IDSPISPOPD** | No clipping |
+| **IDDT** | Automap cheat (type while the map is open): all walls, then things |
+| **IDBEHOLD** | Lists power-ups; then **V** invulnerability, **S** berserk, **I** invisibility, **R** radiation suit, **A** computer map, **L** light visor |
+| **IDCHOPPERS** | Chainsaw |
+| **IDMYPOS** | Print angle and coordinates |
+| **IDCLEV** + 2 digits | Warp (`11` = E1M1 or MAP11) |
+| **IDMUS** + 2 digits | Change music (`11` = E1M1 / MAP11 track) |
 
 ---
 
@@ -569,6 +600,18 @@ boot.prg             picks the IWAD and starts the game
 *.prg / *.ch         engine in Harbour
 xAllegro/            Allegro GT + C wrappers
 ```
+
+---
+
+## Lineage
+
+1. **id Software DOOM** (1993) — original engine
+2. **Chocolate Doom / doomgeneric** — portable C
+3. **[harbour_doom](https://github.com/vagucs/harbour_doom)** — Harbour + Allegro 4.2.2 (`Doom_hb.exe`) (this tree)
+4. **[python_doom](https://github.com/vagucs/python_doom)** — Python + pygame
+5. **[php_doom](https://github.com/vagucs/php_doom)** — PHP 8 CLI + SDL2 FFI
+6. **[node_doom](https://github.com/vagucs/node_doom)** — Node.js CLI + TypeScript + SDL2 (koffi)
+7. **[java_doom](https://github.com/vagucs/java_doom)** — Java 17 CLI + SDL2 (JNA)
 
 ---
 

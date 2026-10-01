@@ -12,7 +12,7 @@ www.vagucs.com.br
 #ifndef DEH_MISC_H
 #define DEH_MISC_H
 
-/* Original: #include "doomfeatures.h" */
+#include "doomfeatures.ch"
 
 #define DEH_DEFAULT_INITIAL_HEALTH      100
 #define DEH_DEFAULT_INITIAL_BULLETS     50

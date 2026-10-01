@@ -23,9 +23,7 @@ www.vagucs.com.br
 #define ANG270 0xC0000000
 #endif
 
-#ifndef DEH_String
-#define DEH_String( x ) ( x )
-#endif
+#include "deh_str.ch"
 
 
 #endif

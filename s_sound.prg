@@ -187,6 +187,10 @@ STATIC FUNCTION S_AdjustSoundParams( listener, source, vol, sep )
     MEMVAR finesine
     MEMVAR gamemap
 
+    IF listener == NIL .OR. source == NIL
+        RETURN 0
+    ENDIF
+
     adx := Abs( listener:x - source:x )
     ady := Abs( listener:y - source:y )
     approx_dist := adx + ady - Shar( iif( adx < ady, adx, ady ), 1 )

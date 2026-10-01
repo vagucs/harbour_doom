@@ -14,6 +14,8 @@ Por **Wagner Nunes da Silva**
 - [www.vagucs.com.br](https://www.vagucs.com.br)
 - [LinkedIn](https://www.linkedin.com/in/wagner-nunes-da-silva-b0a15360)
 
+O mesmo motor em outras linguagens: [harbour_doom](https://github.com/vagucs/harbour_doom) · [python_doom](https://github.com/vagucs/python_doom) · [php_doom](https://github.com/vagucs/php_doom) · [node_doom](https://github.com/vagucs/node_doom) · [java_doom](https://github.com/vagucs/java_doom)
+
 English version: [README.md](README.md)
 
 ---
@@ -54,7 +56,28 @@ Sugestão de roteiro de estudo:
 
 ## De C para Harbour: guia de conversão
 
-### Tabela de conversão
+### Ports (o mesmo motor)
+
+A tabela abaixo é a mesma comparação em seis linguagens usada em todos os README `*_doom`:
+
+| DOOM em C | [Harbour](https://github.com/vagucs/harbour_doom) | [Python](https://github.com/vagucs/python_doom) | [PHP](https://github.com/vagucs/php_doom) | [Node](https://github.com/vagucs/node_doom) | [Java](https://github.com/vagucs/java_doom) |
+|---|---|---|---|---|---|
+| `struct` / `typedef struct` | `CLASS ... DATA` | `@dataclass` | `class` + propriedades tipadas | `class` + campos tipados | `class` + campos |
+| `thing->x` | `thing:x` | `thing.x` | `$thing->x` | `thing.x` | `thing.x` |
+| `NULL` | `NIL` | `None` | `null` | `null` | `null` |
+| `array[0]` | `array[1]` | `array[0]` | `$array[0]` | `array[0]` | `array[0]` |
+| `&`, `\|`, `^` | `hb_qbitAnd/Or/Xor` | `&`, `\|`, `^` | `&`, `\|`, `^` | `&`, `\|`, `^` | `&`, `\|`, `^` |
+| `x >> n` sem sinal | `UShr(x, n)` | `ushr(x, n)` | `Compat::ushr($x, $n)` | `ushr(x, n)` | `Compat.ushr` / `>>>` |
+| `x >> n` com sinal | `Shar(x, n)` | `shar(x, n)` | `Compat::shar($x, $n)` | `shar(x, n)` | `Compat.shar` / `>>` |
+| estouro de 32 bits | `AsU32` / `AsInt32` | `as_u32` / `as_i32` | `Compat::asU32` / `asI32` | `asU32` / `asI32` | `int` já faz wrap |
+| `fixed_t` 16.16 | `FixedMul` / `FixedDiv` | `fixed_mul` / `fixed_div` | `Compat::fixedMul` / `fixedDiv` | `fixedMul` / `fixedDiv` (BigInt) | `fixedMul` / `fixedDiv` (`long`) |
+| framebuffer `byte *` | string Harbour | `bytearray` + LUT numpy | `array<int>` + SDL ARGB8888 | `Uint8Array` + SDL ARGB8888 | `int[]` + SDL ARGB8888 |
+| Allegro 4.2.2 | GTALLEG / llibg | pygame | SDL2 via FFI | SDL2 via koffi | SDL2 via JNA |
+| `Z_Malloc` | GC | GC | GC | GC | GC |
+| globais `PUBLIC` | `PUBLIC` / `MEMVAR` | campos em `Game` | campos públicos em `Game` | campos públicos em `Game` | campos públicos em `Game` |
+| 100+ arquivos `.prg` | 1:1 com o C | `doom/*.py` condensado | `src/*.php` condensado | `src/*.ts` condensado | `src/doom/*.java` condensado |
+
+### Tabela de conversão (C → Harbour)
 
 | DOOM em C | DOOM em Harbour | Observações |
 |---|---|---|
@@ -431,7 +454,7 @@ Taxa típica de desenho no mesmo PC (320×200, janela, IWAD shareware). O jogo c
 | Port | FPS típico |
 |---|---|
 | Harbour (`doom_hb`) | ~12 |
-| Python (`doom_python`) | ~8 |
+| Python (`python_doom`) | ~8 |
 | PHP (`php_doom`) | ~20 |
 | Node (`node_doom`) | ~100 |
 | Java (`java_doom`) | ~180 (travado no vsync) |
@@ -502,12 +525,20 @@ Controles clássicos do DOOM. Dá para remapeá-los em `default.cfg` / `doom_hbd
 
 ### Cheats (só nostalgia)
 
-Digite no teclado durante o jogo, sem Enter:
+Digite no teclado durante o jogo, sem Enter. No skill Nightmare só **IDCLEV** e **IDDT** funcionam (vanilla).
 
 | Código | Efeito |
 |---|---|
 | **IDDQD** | Modo Deus (*Degreelessness Mode*) |
 | **IDKFA** | Todas as armas, munição, chaves e armadura |
+| **IDFA** | Armas, munição e armadura (sem chaves) |
+| **IDCLIP** / **IDSPISPOPD** | Sem colisão |
+| **IDDT** | Cheat do automap (digite com o mapa aberto): todas as paredes, depois os things |
+| **IDBEHOLD** | Lista os power-ups; em seguida **V** invulnerabilidade, **S** berserk, **I** invisibilidade, **R** traje anti-radiação, **A** mapa do computador, **L** visor de luz |
+| **IDCHOPPERS** | Motosserra |
+| **IDMYPOS** | Mostra ângulo e coordenadas |
+| **IDCLEV** + 2 dígitos | Warp (`11` = E1M1 ou MAP11) |
+| **IDMUS** + 2 dígitos | Troca a música (`11` = faixa de E1M1 / MAP11) |
 
 ---
 
@@ -572,6 +603,17 @@ xAllegro/            GT Allegro + wrappers C
 
 ---
 
+## Linhagem
+
+1. **id Software DOOM** (1993) — motor original
+2. **Chocolate Doom / doomgeneric** — C portátil
+3. **[harbour_doom](https://github.com/vagucs/harbour_doom)** — Harbour + Allegro 4.2.2 (`Doom_hb.exe`) (esta árvore)
+4. **[python_doom](https://github.com/vagucs/python_doom)** — Python + pygame
+5. **[php_doom](https://github.com/vagucs/php_doom)** — PHP 8 CLI + SDL2 FFI
+6. **[node_doom](https://github.com/vagucs/node_doom)** — Node.js CLI + TypeScript + SDL2 (koffi)
+7. **[java_doom](https://github.com/vagucs/java_doom)** — Java 17 CLI + SDL2 (JNA)
+
+---
 
 ## Doe
 

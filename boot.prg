@@ -172,7 +172,7 @@ STATIC PROCEDURE D_DoomMainMinimal()
     HU_Init()
     ST_Init()
 
-    G_InitNew( MINIAL_SKILL, MINIAL_EPISODE, MINIAL_MAP )
+    D_StartTitle()
     D_DoomLoop()
 RETURN
 
@@ -190,5 +190,5 @@ PROCEDURE doom_hb_Create()
     myargc := Len( myargv )
 
     DG_Init()
-    D_DoomMainMinimal()
+    D_DoomMain()
 RETURN

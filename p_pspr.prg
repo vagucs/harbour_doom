@@ -28,6 +28,8 @@ STATIC swingy
 #include "deh_misc.ch"
 #include "doomstat.ch"
 
+MEMVAR deh_bfg_cells_per_shot
+
 
 INIT PROCEDURE init_p_pspr
     PUBLIC bulletslope
