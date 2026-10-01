@@ -43,6 +43,7 @@ STATIC pagetic
 #include "d_loop.ch"
 #include "d_main.ch"
 
+#include "config.ch"
 #include "doomfeatures.ch"
 #include "deh_main.ch"
 
@@ -863,6 +864,7 @@ STATIC FUNCTION D_Endoom()
     // a logical.
 RETURN NIL
 
+#ifdef ORIGCODE
 STATIC FUNCTION LoadIwadDeh()
     LOCAL chex_deh
     LOCAL sep
@@ -905,6 +907,7 @@ STATIC FUNCTION LoadIwadDeh()
         ENDIF
     ENDIF
 RETURN NIL
+#endif
 
 FUNCTION D_DoomMain()
     LOCAL p
@@ -1053,9 +1056,11 @@ FUNCTION D_DoomMain()
     D_IdentifyVersion()
     InitGameVersion()
 
+#ifdef ORIGCODE
     IF ! M_ParmExists( "-nodeh" )
         LoadIwadDeh()
     ENDIF
+#endif
 
     IF W_CheckNumForName( "dmenupic" ) >= 0
         OutStd( "BFG Edition: Using workarounds as needed." + hb_eol() )

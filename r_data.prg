@@ -335,9 +335,6 @@ FUNCTION R_GenerateLookup( nTexNum )
         ELSEIF aPatchCount[ nX + 1 ] > 1
             aColLump[ nX + 1 ] := -1
             aColOfs[ nX + 1 ] := texturecompositesize[ nTexNum + 1 ]
-            IF texturecompositesize[ nTexNum + 1 ] > 0x10000 - oTexture:height
-                I_Error( "R_GenerateLookup: texture %i is >64k", nTexNum )
-            ENDIF
             texturecompositesize[ nTexNum + 1 ] := ;
                 texturecompositesize[ nTexNum + 1 ] + oTexture:height
         ENDIF

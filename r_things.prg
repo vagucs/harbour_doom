@@ -243,13 +243,15 @@ PROCEDURE R_InitSpriteDefs( namelist )
         maxframe++
         FOR frame := 0 TO maxframe - 1
             IF sprtemp[ frame + 1 ]:rotate == -1
-                I_Error( "R_InitSprites: No patches found for " + spritename + ;
-                         " frame " + Chr( Asc( "A" ) + frame ) )
+                OutErr( "R_InitSprites: No patches found for " + spritename + ;
+                        " frame " + Chr( Asc( "A" ) + frame ) + hb_eol() )
+                sprtemp[ frame + 1 ]:rotate := 0
             ELSEIF sprtemp[ frame + 1 ]:rotate == 1
                 FOR rotation := 1 TO 8
                     IF sprtemp[ frame + 1 ]:lump[ rotation ] == -1
-                        I_Error( "R_InitSprites: Sprite " + spritename + ;
-                                 " is missing rotations" )
+                        OutErr( "R_InitSprites: Sprite " + spritename + ;
+                                " frame " + Chr( Asc( "A" ) + frame ) + ;
+                                " is missing rotations" + hb_eol() )
                     ENDIF
                 NEXT
             ENDIF
@@ -515,6 +517,10 @@ PROCEDURE R_ProjectSprite( thing )
         flip := sprframe:flip[ 1 ] != 0
     ENDIF
 
+    IF lump < 0
+        RETURN
+    ENDIF
+
     tx -= spriteoffset[ lump + 1 ]
     x1 := Shar( centerxfrac + FixedMul( tx, xscale ), FRACBITS )
     IF x1 > viewwidth
@@ -625,6 +631,9 @@ PROCEDURE R_DrawPSprite( psp )
     sprframe := sprdef:spriteframes[ frame + 1 ]
     lump := sprframe:lump[ 1 ]
     flip := sprframe:flip[ 1 ] != 0
+    IF lump < 0
+        RETURN
+    ENDIF
 
     tx := psp:sx - 160 * FRACUNIT
     tx -= spriteoffset[ lump + 1 ]
