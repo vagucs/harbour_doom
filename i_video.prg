@@ -205,9 +205,23 @@ FUNCTION I_InitGraphics()
         s_video_hb := .F.
     ENDIF
     s_showfps := M_ParmExists( "-fps" )
+    IF M_ParmExists( "-neogeo" )
+        IVideoSetMaxColors( 75 )
+        IVideoSetShadePct( 75 )
+        IVideoSetGrayPct( 20 )
+        OutStd( "I_InitGraphics: neo geo preset" + hb_eol() )
+    ENDIF
     i := M_CheckParmWithArgs( "-colors", 1 )
     IF i > 0
         IVideoSetMaxColors( Int( Val( myargv[ i + 1 + 1 ] ) ) )
+    ENDIF
+    i := M_CheckParmWithArgs( "-shades", 1 )
+    IF i > 0
+        IVideoSetShadePct( Int( Val( myargv[ i + 1 + 1 ] ) ) )
+    ENDIF
+    i := M_CheckParmWithArgs( "-gray", 1 )
+    IF i > 0
+        IVideoSetGrayPct( Int( Val( myargv[ i + 1 + 1 ] ) ) )
     ENDIF
     OutStd( "I_InitGraphics: video path: " + iif( s_video_hb, "Harbour", "C" ) + hb_eol() )
     IF s_showfps
@@ -215,7 +229,9 @@ FUNCTION I_InitGraphics()
     ENDIF
     IF IVideoGetMaxColors() < 256
         OutStd( "I_InitGraphics: palette quantized to " + ;
-            hb_ntos( IVideoGetMaxColors() ) + " colors" + hb_eol() )
+            hb_ntos( IVideoGetMaxColors() ) + " colors, shades " + ;
+            hb_ntos( IVideoGetShadePct() ) + "%, gray " + ;
+            hb_ntos( IVideoGetGrayPct() ) + "%" + hb_eol() )
     ENDIF
 
     i := M_CheckParmWithArgs( "-scaling", 1 )
@@ -508,7 +524,13 @@ extern unsigned char *DG_ScreenBuffer;
 boolean palette_changed;
 struct color colors[ 256 ];
 
-static int s_max_colors = 256;
+static int s_max_colors = 75;
+/* Percentual das cores livres gasto em rampas de luz (chao/teto).
+   0 = so farthest-point. */
+static int s_shade_pct = 75;
+/* Quanto as rampas (cinza/marrom/oliva/azul) caminham para o cinza.
+   0 deixa o tom original. O verde vivo (HUD, sangue, lodo) nao entra. */
+static int s_gray_pct = 20;
 
 static int ColorDist2( int r1, int g1, int b1, int r2, int g2, int b2 )
 {
@@ -525,9 +547,13 @@ static int ColorLum( int r, int g, int b )
    return r * 3 + g * 6 + b;
 }
 
+static int ColorSat( int r, int g, int b );
+static int ToneBin( int r, int g, int b );
+
 static int AddFarthest( const unsigned char *src_r, const unsigned char *src_g,
                         const unsigned char *src_b, int *pal_r, int *pal_g,
-                        int *pal_b, int nChosen, int nWant, int nMaxLum )
+                        int *pal_b, int nChosen, int nWant, int nMaxLum,
+                        int chromaOnly )
 {
    int i;
    int k;
@@ -543,6 +569,8 @@ static int AddFarthest( const unsigned char *src_r, const unsigned char *src_g,
       for( i = 1; i < 256; i++ )
       {
          if( nMaxLum >= 0 && ColorLum( src_r[ i ], src_g[ i ], src_b[ i ] ) > nMaxLum )
+            continue;
+         if( chromaOnly && ToneBin( src_r[ i ], src_g[ i ], src_b[ i ] ) >= 0 )
             continue;
          min_d = 0x7fffffff;
          for( k = 0; k < nChosen; k++ )
@@ -584,11 +612,87 @@ static int ColorSat( int r, int g, int b )
    return mx - mn;
 }
 
+/* 0 cinza, 1 marrom/bege, 2 oliva, 3 azul acinzentado.
+   -1 fica para o bloco cromatico (sangue, HUD, ceu vivo). */
+static int ToneBin( int r, int g, int b )
+{
+   int sat = ColorSat( r, g, b );
+
+   if( sat <= 28 )
+      return 0;
+   if( r > g + 28 && r > b + 28 && ( g * 2 ) < r )
+      return -1;
+   if( g > r + 28 && g > b + 28 && sat > 64 )
+      return -1;
+   if( b > r + 24 && b > g + 16 && sat > 56 )
+      return -1;
+   if( b >= r && b >= g )
+      return 3;
+   if( g + 6 >= r && g >= b )
+      return 2;
+   if( r >= b && g + 8 >= b )
+      return 1;
+   return -1;
+}
+
+/* Escolhe degraus de luz dentro de um tom. A distancia e luminancia,
+   para o colormap do chao/teto nao cair no mesmo RGB. */
+static int AddToneRamp( const unsigned char *src_r, const unsigned char *src_g,
+                        const unsigned char *src_b, int *pal_r, int *pal_g,
+                        int *pal_b, int nChosen, int nStop, int bin )
+{
+   int i;
+   int k;
+   int d;
+   int dl;
+   int min_d;
+   int best_i;
+   int best_d;
+   int lum_i;
+
+   while( nChosen < nStop )
+   {
+      best_i = -1;
+      best_d = -1;
+      for( i = 1; i < 256; i++ )
+      {
+         if( ToneBin( src_r[ i ], src_g[ i ], src_b[ i ] ) != bin )
+            continue;
+         lum_i = ColorLum( src_r[ i ], src_g[ i ], src_b[ i ] );
+         min_d = 0x7fffffff;
+         for( k = 0; k < nChosen; k++ )
+         {
+            dl = lum_i - ColorLum( pal_r[ k ], pal_g[ k ], pal_b[ k ] );
+            if( dl < 0 )
+               dl = -dl;
+            d = dl * dl;
+            d += ColorDist2( src_r[ i ], src_g[ i ], src_b[ i ],
+                             pal_r[ k ], pal_g[ k ], pal_b[ k ] ) / 64;
+            if( d < min_d )
+               min_d = d;
+         }
+         if( min_d > best_d )
+         {
+            best_d = min_d;
+            best_i = i;
+         }
+      }
+      /* degrau curto demais nao separa o chao; a vaga volta ao croma */
+      if( best_i < 0 || best_d <= 400 )
+         break;
+      pal_r[ nChosen ] = src_r[ best_i ];
+      pal_g[ nChosen ] = src_g[ best_i ];
+      pal_b[ nChosen ] = src_b[ best_i ];
+      nChosen++;
+   }
+   return nChosen;
+}
+
 /* Reduz colors[] a no maximo nWant RGBs distintos.
-   So o indice 0 (preto / transparencia) e reservado; o resto e
-   farthest-point no PLAYPAL inteiro. Sem cota extra de pretos:
-   cinza de chao/teto nao e puxado para o preto. Cinza quase
-   neutro prefere alvo pouco saturado, para nao virar marrom. */
+   Indice 0 fica reservado. s_shade_pct % das demais vagas viram
+   rampas de luz (cinza, marrom, oliva, azul). O resto e
+   farthest-point nas cores vivas. Cinza quase neutro prefere
+   alvo pouco saturado. O resultado e escurecido em 5%. */
 static void QuantizeColors( int nWant )
 {
    unsigned char src_r[ 256 ];
@@ -597,7 +701,13 @@ static void QuantizeColors( int nWant )
    int pal_r[ 256 ];
    int pal_g[ 256 ];
    int pal_b[ 256 ];
+   int quota[ 4 ];
    int nChosen;
+   int nFree;
+   int nShade;
+   int left;
+   int used;
+   int bin;
    int i;
    int k;
    int best_i;
@@ -623,8 +733,42 @@ static void QuantizeColors( int nWant )
    pal_r[ 0 ] = src_r[ 0 ];
    pal_g[ 0 ] = src_g[ 0 ];
    pal_b[ 0 ] = src_b[ 0 ];
+   nChosen = 1;
+   nFree = nWant - 1;
+   nShade = ( nFree * s_shade_pct ) / 100;
+   if( nShade > nFree )
+      nShade = nFree;
+   if( nShade < 0 )
+      nShade = 0;
+
+   if( nShade > 0 )
+   {
+      /* 45% cinza, 40% marrom, 5% oliva, 10% azul.
+         Oliva baixo: com shades alto ele puxava a cena para o verde. */
+      for( bin = 0; bin < 4; bin++ )
+         quota[ bin ] = 0;
+      left = nShade;
+      if( nShade >= 4 )
+      {
+         quota[ 0 ] = quota[ 1 ] = quota[ 2 ] = quota[ 3 ] = 1;
+         left = nShade - 4;
+      }
+      quota[ 0 ] += ( left * 45 ) / 100;
+      quota[ 1 ] += ( left * 40 ) / 100;
+      quota[ 2 ] += ( left * 5 ) / 100;
+      quota[ 3 ] += ( left * 10 ) / 100;
+      used = quota[ 0 ] + quota[ 1 ] + quota[ 2 ] + quota[ 3 ];
+      quota[ 0 ] += nShade - used;
+      for( bin = 0; bin < 4; bin++ )
+         nChosen = AddToneRamp( src_r, src_g, src_b, pal_r, pal_g, pal_b,
+                                nChosen, nChosen + quota[ bin ], bin );
+   }
+
    nChosen = AddFarthest( src_r, src_g, src_b, pal_r, pal_g, pal_b,
-                          1, nWant, -1 );
+                          nChosen, nWant, -1, nShade > 0 );
+   if( nChosen < nWant )
+      nChosen = AddFarthest( src_r, src_g, src_b, pal_r, pal_g, pal_b,
+                             nChosen, nWant, -1, 0 );
 
    for( i = 0; i < 256; i++ )
    {
@@ -640,6 +784,9 @@ static void QuantizeColors( int nWant )
          /* so quase-preto: cinza de chao usa vizinho RGB */
          if( src_lum <= 250 && lift > 240 )
             d += ( lift * lift ) / 16;
+         /* com rampas, o pixel fica no degrau de luz mais proximo */
+         if( nShade > 0 )
+            d += ( lift * lift ) / 48;
          sat_d = ColorSat( pal_r[ k ], pal_g[ k ], pal_b[ k ] ) - src_sat;
          if( src_sat <= 24 && sat_d > 16 )
             d += sat_d * sat_d;
@@ -651,21 +798,40 @@ static void QuantizeColors( int nWant )
                break;
          }
       }
-      /* 5% mais escuro: o farthest-point tende a privilegiar midtones claros */
-      colors[ i ].r = ( unsigned char ) ( ( pal_r[ best_i ] * 95 ) / 100 );
-      colors[ i ].g = ( unsigned char ) ( ( pal_g[ best_i ] * 95 ) / 100 );
-      colors[ i ].b = ( unsigned char ) ( ( pal_b[ best_i ] * 95 ) / 100 );
-      /* verde-oliva (19,34,11): mais escuro e puxado ao cinza do chao */
-      if( ColorDist2( pal_r[ best_i ], pal_g[ best_i ], pal_b[ best_i ], 19, 34, 11 ) <= 625 )
+      /* 5% mais escuro: o farthest-point tende a privilegiar midtones claros.
+         Rampas perdem o excesso de verde e caminham para o cinza.
+         Sangue, HUD e lodo ficam de fora. */
       {
-         int nR = colors[ i ].r;
-         int nG = colors[ i ].g;
-         int nB = colors[ i ].b;
-         int nGray = ( ( nR + nG + nB ) / 3 * 85 ) / 100;
+         int nR = ( pal_r[ best_i ] * 95 ) / 100;
+         int nG = ( pal_g[ best_i ] * 95 ) / 100;
+         int nB = ( pal_b[ best_i ] * 95 ) / 100;
+         int nGray;
+         int nMid;
+         int nKeep;
 
-         nR = ( nR + nGray * 2 ) / 3;
-         nG = ( nG + nGray * 2 ) / 3;
-         nB = ( nB + nGray * 2 ) / 3;
+         if( nShade > 0 && s_gray_pct > 0 &&
+             ToneBin( pal_r[ best_i ], pal_g[ best_i ], pal_b[ best_i ] ) >= 0 )
+         {
+            nMid = ( nR + nB ) / 2;
+            if( nG > nMid )
+            {
+               nKeep = 100 - s_gray_pct;
+               nG = nMid + ( ( nG - nMid ) * nKeep ) / 100;
+            }
+            nGray = ( nR + nG + nB ) / 3;
+            nKeep = 100 - s_gray_pct;
+            nR = ( nR * nKeep + nGray * s_gray_pct ) / 100;
+            nG = ( nG * nKeep + nGray * s_gray_pct ) / 100;
+            nB = ( nB * nKeep + nGray * s_gray_pct ) / 100;
+         }
+         else if( nShade == 0 &&
+                  ColorDist2( pal_r[ best_i ], pal_g[ best_i ], pal_b[ best_i ], 19, 34, 11 ) <= 625 )
+         {
+            nGray = ( ( nR + nG + nB ) / 3 * 85 ) / 100;
+            nR = ( nR + nGray * 2 ) / 3;
+            nG = ( nG + nGray * 2 ) / 3;
+            nB = ( nB + nGray * 2 ) / 3;
+         }
          colors[ i ].r = ( unsigned char ) nR;
          colors[ i ].g = ( unsigned char ) nG;
          colors[ i ].b = ( unsigned char ) nB;
@@ -687,6 +853,38 @@ HB_FUNC( IVIDEOSETMAXCOLORS )
 HB_FUNC( IVIDEOGETMAXCOLORS )
 {
    hb_retni( s_max_colors );
+}
+
+HB_FUNC( IVIDEOSETSHADEPCT )
+{
+   int n = hb_parni( 1 );
+
+   if( n < 0 )
+      n = 0;
+   if( n > 100 )
+      n = 100;
+   s_shade_pct = n;
+}
+
+HB_FUNC( IVIDEOGETSHADEPCT )
+{
+   hb_retni( s_shade_pct );
+}
+
+HB_FUNC( IVIDEOSETGRAYPCT )
+{
+   int n = hb_parni( 1 );
+
+   if( n < 0 )
+      n = 0;
+   if( n > 100 )
+      n = 100;
+   s_gray_pct = n;
+}
+
+HB_FUNC( IVIDEOGETGRAYPCT )
+{
+   hb_retni( s_gray_pct );
 }
 
 HB_FUNC( IVIDEOSETPALETTE )
