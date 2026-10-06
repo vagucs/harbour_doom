@@ -617,6 +617,10 @@ xAllegro/            Allegro GT + C wrappers
 
 ## Donate
 
+### GitHub Sponsors
+
+[github.com/sponsors/vagucs](https://github.com/sponsors/vagucs)
+
 ### Ethereum
 
 `0x1b64038A2b1DB73ABd0068d8B9B0d1dC5a90C5F1`
