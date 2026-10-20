@@ -18,10 +18,6 @@ www.vagucs.com.br
 #translate ( <exp1> ^^ <exp2> )     => ( hb_qbitXor( ( <exp1> ), ( <exp2> ) ) )
 
 #include "doomgeneric.ch"
-#include "llibg.ch"
-
-REQUEST HB_GT_ALLEG
-REQUEST HB_GT_ALLEG_DEFAULT
 
 PROCEDURE Main()
     LOCAL nMaxFps
@@ -31,11 +27,6 @@ PROCEDURE Main()
     LOCAL nWait
     LOCAL i
     MEMVAR myargv
-
-    config_driver( GFX_DIRECTX_WIN )
-    config_lib( 32, 640, 480 )
-    SetMode( 30, 80 )
-    _set_window_title( "DOOM" )
 
     doom_hb_Create()
 

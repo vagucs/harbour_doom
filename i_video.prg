@@ -28,6 +28,9 @@ STATIC s_showfps := .F.
 STATIC s_fps_frames := 0
 STATIC s_fps_last_ms := 0
 STATIC s_fps_value := 0
+STATIC s_fps_total := 0
+STATIC s_fps_start_ms := 0
+STATIC s_fps_avg := 0
 
 #include "fileio.ch"
 #include "doomtype.ch"
@@ -356,6 +359,7 @@ RETURN
 
 STATIC PROCEDURE I_DrawFps()
     LOCAL nNow
+    LOCAL nSpan
     LOCAL cText
     LOCAL nX
     MEMVAR hu_font
@@ -367,10 +371,16 @@ STATIC PROCEDURE I_DrawFps()
     nNow := I_GetTimeMS()
     IF s_fps_last_ms == 0
         s_fps_last_ms := nNow
+        s_fps_start_ms := nNow
     ENDIF
     s_fps_frames++
     IF ( ( nNow - s_fps_last_ms ) & 0xFFFFFFFF ) >= 1000
         s_fps_value := s_fps_frames
+        s_fps_total += s_fps_frames
+        nSpan := ( ( nNow - s_fps_start_ms ) & 0xFFFFFFFF )
+        IF nSpan > 0
+            s_fps_avg := Int( s_fps_total * 1000 / nSpan )
+        ENDIF
         s_fps_frames := 0
         s_fps_last_ms := nNow
     ENDIF
@@ -379,7 +389,7 @@ STATIC PROCEDURE I_DrawFps()
         RETURN
     ENDIF
 
-    cText := hb_ntos( s_fps_value ) + " FPS"
+    cText := hb_ntos( s_fps_value ) + " FPS  " + hb_ntos( s_fps_avg ) + " AVG"
     nX := SCREENWIDTH - M_StringWidth( cText ) - 2
     IF nX < 0
         nX := 0
@@ -388,13 +398,7 @@ STATIC PROCEDURE I_DrawFps()
 RETURN
 
 FUNCTION I_FinishUpdate()
-    MEMVAR I_VideoBuffer
     I_DrawFps()
-    IF s_video_hb
-        IVideoFinishUpdateHb( fb_scaling, s_Fb:xres, s_Fb:yres, s_Fb:bits_per_pixel, I_VideoBuffer )
-    ELSEIF ! DG_Fullscreen()
-        IVideoFinishUpdate( fb_scaling, s_Fb:xres, s_Fb:yres, s_Fb:bits_per_pixel, I_VideoBuffer )
-    ENDIF
     DG_DrawFrame()
 RETURN NIL
 

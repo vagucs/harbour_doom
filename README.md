@@ -4,7 +4,7 @@
 
 **Video:** [DOOM running in Harbour/xBase](https://youtu.be/iigjFIW7peM)
 
-DOOM generic ported to Harbour, with minimal C interfaces for Allegro 4.2.2.
+DOOM generic ported to Harbour. The window is SDL3. Sound and MIDI stay on Allegro 4.2.2.
 
 By **Wagner Nunes da Silva**
 
@@ -559,13 +559,13 @@ Video runs **100% in Harbour** by default (palette and `I_FinishUpdate`). If tha
 
 | Parameter | Description |
 |---|---|
-| `-videoc` | Use the C path for palette and framebuffer blit (faster fallback) |
-| `-scaling N` | Scale factor from 320×200 (1–8). If omitted, it is computed |
+| `-videoc` | Older C palette path. The window is always SDL3 |
+| `-scaling N` | Window size: 320×N by 200×N (1–8). Without it, the window opens at 640×400 |
 | `-gfxmode rgba8888` | 32 bpp framebuffer (default when not CMAP256) |
 | `-gfxmode rgb565` | 16 bpp framebuffer |
-| `-fullscreen` | Try Allegro full-screen |
-| `-crt` | CRT monitor filter: tube curvature, scanlines, RGB phosphor mask and vignette. Works windowed and full-screen |
-| `-fps` | Show frames per second at the top-right of the screen |
+| `-fullscreen` | Open SDL3 full screen. Alt+Enter toggles it |
+| `-crt` | Allegro CRT filter. The SDL3 picture does not use it |
+| `-fps` | Show the last second and the average since the counter started, at the top-right of the screen |
 | `-colors N` | Quantize `PLAYPAL` to at most N distinct colors (2–256). Only index 0 is reserved; the rest uses farthest-point. Near-gray colors prefer a low-saturation match so floors stay gray. The result is darkened by 5%. Applies to pain/bonus/radiation palettes and gamma too |
 
 Startup logs `I_InitGraphics: video path: Harbour` or `C`.

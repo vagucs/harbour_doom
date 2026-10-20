@@ -4,7 +4,7 @@
 
 **Vídeo:** [DOOM rodando em Harbour/xBase](https://youtu.be/iigjFIW7peM)
 
-DOOM generic portado para Harbour, com interfaces mínimas em C para acesso ao Allegro 4.2.2.
+DOOM generic portado para Harbour. A janela é SDL3. O som e o MIDI continuam na Allegro 4.2.2.
 
 Por **Wagner Nunes da Silva**
 
@@ -559,13 +559,13 @@ O vídeo roda **100% em Harbour** por padrão (paleta e `I_FinishUpdate`). Se fi
 
 | Parâmetro | Descrição |
 |---|---|
-| `-videoc` | Usa o caminho em C para paleta e blit do framebuffer (alternativa mais rápida) |
-| `-scaling N` | Fator de escala do 320×200 (1–8). Sem isso, calcula sozinho |
+| `-videoc` | Caminho antigo de paleta em C. A janela é sempre a SDL3 |
+| `-scaling N` | Tamanho da janela: 320×N por 200×N (1–8). Sem isso, a janela abre em 640×400 |
 | `-gfxmode rgba8888` | Framebuffer 32 bpp (padrão se não for CMAP256) |
 | `-gfxmode rgb565` | Framebuffer 16 bpp |
-| `-fullscreen` | Tenta tela cheia no Allegro |
-| `-crt` | Filtro de monitor CRT: curvatura do tubo, scanlines, máscara RGB de fósforo e vinheta. Funciona em janela e em tela cheia |
-| `-fps` | Mostra os quadros por segundo no canto superior direito da tela |
+| `-fullscreen` | Abre a SDL3 em tela cheia. Alt+Enter alterna |
+| `-crt` | Filtro CRT da Allegro. A imagem da SDL3 não usa esse filtro |
+| `-fps` | Mostra os quadros do último segundo e a média desde que o contador ligou, no canto superior direito |
 | `-colors N` | Quantiza o `PLAYPAL` para no máximo N cores distintas (2–256). Só o índice 0 é reservado; o resto usa farthest-point. Cinza quase neutro prefere alvo pouco saturado, para o chão não virar marrom. O resultado é escurecido em 5%. Vale também para as paletas de dano/bônus/radiação e para o gamma |
 
 Na inicialização o log mostra `I_InitGraphics: video path: Harbour` ou `C`.

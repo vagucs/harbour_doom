@@ -13,6 +13,9 @@
 -cflag=-I.
 -cflag=-IxAllegro
 -cflag=-Ic:\mingw-4.8.1\include
+-cflag=-I../../../sdl3/include
+-Lsdl3/lib
+-lSDL3
 -lalleg
 -lwinmm
 -lgdi32

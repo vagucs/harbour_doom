@@ -17,93 +17,16 @@ www.vagucs.com.br
 #translate ( <exp1> & <exp2> )      => ( hb_qbitAnd( ( <exp1> ), ( <exp2> ) ) )
 #translate ( <exp1> ^^ <exp2> )     => ( hb_qbitXor( ( <exp1> ), ( <exp2> ) ) )
 
-STATIC videomode_set := .F.
-STATIC text_mode_hooked := .F.
 STATIC s_fullscreen := 0
 STATIC s_scale := 2
-STATIC s_dest_x := 0
-STATIC s_dest_y := 0
-STATIC s_dest_w := 320
-STATIC s_dest_h := 200
-STATIC s_alt_enter_latched := 0
 
-#include "doomkeys.ch"
 #include "doomgeneric.ch"
-#include "llibg.ch"
-
-#define GFX_TEXT                   -1
-#define GFX_AUTODETECT_FULLSCREEN   1
-#define GFX_AUTODETECT_WINDOWED     2
-
-/* Allegro 4 scancodes (ALLEGRO_NO_KEY_DEFINES). */
-#define ALG_KEY_0_PAD       37
-#define ALG_KEY_1_PAD       38
-#define ALG_KEY_2_PAD       39
-#define ALG_KEY_3_PAD       40
-#define ALG_KEY_4_PAD       41
-#define ALG_KEY_5_PAD       42
-#define ALG_KEY_6_PAD       43
-#define ALG_KEY_7_PAD       44
-#define ALG_KEY_8_PAD       45
-#define ALG_KEY_9_PAD       46
-#define ALG_KEY_F1          47
-#define ALG_KEY_F2          48
-#define ALG_KEY_F3          49
-#define ALG_KEY_F4          50
-#define ALG_KEY_F5          51
-#define ALG_KEY_F6          52
-#define ALG_KEY_F7          53
-#define ALG_KEY_F8          54
-#define ALG_KEY_F9          55
-#define ALG_KEY_F10         56
-#define ALG_KEY_F11         57
-#define ALG_KEY_F12         58
-#define ALG_KEY_ESC         59
-#define ALG_KEY_MINUS       61
-#define ALG_KEY_EQUALS      62
-#define ALG_KEY_BACKSPACE   63
-#define ALG_KEY_TAB         64
-#define ALG_KEY_ENTER       67
-#define ALG_KEY_COMMA       72
-#define ALG_KEY_STOP        73
-#define ALG_KEY_SPACE       75
-#define ALG_KEY_INSERT      76
-#define ALG_KEY_DEL         77
-#define ALG_KEY_HOME        78
-#define ALG_KEY_END         79
-#define ALG_KEY_PGUP        80
-#define ALG_KEY_PGDN        81
-#define ALG_KEY_LEFT        82
-#define ALG_KEY_RIGHT       83
-#define ALG_KEY_UP          84
-#define ALG_KEY_DOWN        85
-#define ALG_KEY_SLASH_PAD   86
-#define ALG_KEY_ASTERISK    87
-#define ALG_KEY_MINUS_PAD   88
-#define ALG_KEY_PLUS_PAD    89
-#define ALG_KEY_DEL_PAD     90
-#define ALG_KEY_ENTER_PAD   91
-#define ALG_KEY_PRTSCR      92
-#define ALG_KEY_PAUSE       93
-#define ALG_KEY_EQUALS_PAD  103
-#define ALG_KEY_LSHIFT      115
-#define ALG_KEY_RSHIFT      116
-#define ALG_KEY_LCONTROL    117
-#define ALG_KEY_RCONTROL    118
-#define ALG_KEY_ALT         119
-#define ALG_KEY_ALTGR       120
-#define ALG_KEY_SCRLOCK     124
-#define ALG_KEY_NUMLOCK     125
-#define ALG_KEY_CAPSLOCK    126
-
-
 
 STATIC PROCEDURE ParseVideoArgs()
     LOCAL p
     MEMVAR myargv
 
     s_fullscreen := iif( M_ParmExists( "-fullscreen" ), 1, 0 )
-    AlgSetCrt( M_ParmExists( "-crt" ) )
 
     p := M_CheckParmWithArgs( "-scaling", 1 )
     IF p > 0
@@ -117,331 +40,62 @@ STATIC PROCEDURE ParseVideoArgs()
     ENDIF
 RETURN
 
-STATIC PROCEDURE ComputeDestRect( screen_w, screen_h, letterbox_43 )
-    IF letterbox_43 == 0
-        s_dest_x := 0
-        s_dest_y := 0
-        s_dest_w := screen_w
-        s_dest_h := screen_h
-        RETURN
-    ENDIF
-
-    IF screen_w * 3 > screen_h * 4
-        s_dest_h := screen_h
-        s_dest_w := Int( screen_h * 4 / 3 )
-    ELSE
-        s_dest_w := screen_w
-        s_dest_h := Int( screen_w * 3 / 4 )
-    ENDIF
-
-    s_dest_x := Int( ( screen_w - s_dest_w ) / 2 )
-    s_dest_y := Int( ( screen_h - s_dest_h ) / 2 )
-RETURN
-
-STATIC FUNCTION DesktopSize()
-    LOCAL aDesk
-
-    aDesk := AlgDesktopRes()
-    IF aDesk != NIL .AND. aDesk[ 1 ] >= 320 .AND. aDesk[ 2 ] >= 200
-        RETURN aDesk
-    ENDIF
-RETURN { 640, 480 }
-
-STATIC FUNCTION SetDisplayMode( fullscreen )
-    LOCAL lFull := ( fullscreen != 0 )
-    LOCAL aSize
-    LOCAL aDesk
-
-    AllegGameVideo( .T. )
-
-    IF lFull
-        IF AlgOverlayShow() == 0
-            RETURN 0
-        ENDIF
-        aSize := AlgOverlaySize()
-        IF aSize == NIL
-            aDesk := DesktopSize()
-            aSize := { aDesk[ 1 ], aDesk[ 2 ] }
-        ENDIF
-        s_fullscreen := 1
-        ComputeDestRect( aSize[ 1 ], aSize[ 2 ], 1 )
-    ELSE
-        AlgOverlayHide()
-        s_fullscreen := 0
-        aSize := { AlgScreenW(), AlgScreenH() }
-        IF aSize[ 1 ] < 320
-            aSize[ 1 ] := 640
-        ENDIF
-        IF aSize[ 2 ] < 200
-            aSize[ 2 ] := 480
-        ENDIF
-        ComputeDestRect( aSize[ 1 ], aSize[ 2 ], 0 )
-    ENDIF
-#ifdef CMAP256
-    AlgSetPaletteChanged( .T. )
-#endif
-RETURN 1
-
-STATIC PROCEDURE ToggleFullscreen()
-    SetDisplayMode( iif( s_fullscreen != 0, 0, 1 ) )
-RETURN
-
-STATIC PROCEDURE PollFullscreenHotkey()
-    LOCAL alt_down
-    LOCAL enter_down
-
-    alt_down := AlgKeyDown( ALG_KEY_ALT ) != 0 .OR. AlgKeyDown( ALG_KEY_ALTGR ) != 0
-    enter_down := AlgKeyDown( ALG_KEY_ENTER ) != 0 .OR. AlgKeyDown( ALG_KEY_ENTER_PAD ) != 0
-
-    IF alt_down .AND. enter_down
-        IF s_alt_enter_latched == 0
-            s_alt_enter_latched := 1
-            ToggleFullscreen()
-        ENDIF
-    ELSE
-        s_alt_enter_latched := 0
-    ENDIF
-RETURN
-
 FUNCTION DG_Init()
-    LOCAL result
     LOCAL nW
     LOCAL nH
 
-    OutStd( "Initializing Allegro (GTALLEG / llibg)" + hb_eol() )
+    OutStd( "Initializing SDL3" + hb_eol() )
 
-    I_AtExit( {|| AlgExit() }, .T. )
-
-    result := AlgInstallHooks()
-    IF result < 0
-        I_Error( "Unable to install timer: " + hb_ntos( result ) + " " + AlgErrorText() + hb_eol() )
-    ENDIF
+    I_AtExit( {|| SdlShutdown(), AlgExit() }, .T. )
+    AlgInit()
 
     ParseVideoArgs()
-    nW := AlgScreenW()
-    nH := AlgScreenH()
-    IF nW < 320
-        nW := 640
+    nW := 320 * s_scale
+    nH := 200 * s_scale
+    IF SdlOpen( nW, nH, s_fullscreen != 0 ) == 0
+        I_Error( "SDL3: " + SdlLastError() + hb_eol() )
     ENDIF
-    IF nH < 200
-        nH := 480
-    ENDIF
-    ComputeDestRect( nW, nH, 0 )
-
-    IF ! AlgHasTempBitmap() .AND. AlgCreateTempBitmap() == 0
-        I_Error( "Failed to create temp bitmap" + hb_eol() )
-    ENDIF
-    AllegGameVideo( .T. )
-    videomode_set := .T.
-#ifdef CMAP256
-    AlgSetPaletteChanged( .T. )
-#endif
-    IF s_fullscreen != 0
-        SetDisplayMode( 1 )
-    ENDIF
-    OutStd( "Allegro video: " + hb_ntos( AlgScreenW() ) + "x" + ;
-        hb_ntos( AlgScreenH() ) + iif( s_fullscreen != 0, " fullscreen", " windowed" ) + ;
-        " (llibg/GTALLEG dest=" + hb_ntos( s_dest_w ) + "x" + ;
-        hb_ntos( s_dest_h ) + ")" + iif( AlgGetCrt(), " CRT filter", "" ) + hb_eol() )
+    OutStd( "SDL3 video: " + hb_ntos( nW ) + "x" + hb_ntos( nH ) + ;
+        iif( s_fullscreen != 0, " fullscreen", " windowed" ) + hb_eol() )
 RETURN NIL
 
 FUNCTION DG_Fullscreen()
-RETURN s_fullscreen != 0
+RETURN SdlIsFullscreen()
 
 FUNCTION DG_DrawFrame()
     MEMVAR I_VideoBuffer
 
-    IF ! videomode_set
-        IF ! AlgHasTempBitmap() .AND. AlgCreateTempBitmap() == 0
-            I_Error( "Failed to create temp bitmap" + hb_eol() )
-        ENDIF
-        videomode_set := .T.
-#ifdef CMAP256
-        AlgSetPaletteChanged( .T. )
-#endif
-    ENDIF
-
-    PollFullscreenHotkey()
-
-#ifdef CMAP256
-    IF AlgGetPaletteChanged() .AND. AlgHasScreen() .AND. AlgScreenDepth() == 8
-        AlgSetPalette8()
-    ENDIF
-    AlgSetPaletteChanged( .F. )
-#endif
-
-    IF s_fullscreen != 0 .AND. ValType( I_VideoBuffer ) == "C"
-        AlgPresentOverlayVid( I_VideoBuffer, s_dest_x, s_dest_y, s_dest_w, s_dest_h )
-        RETURN NIL
-    ENDIF
-
     IF ValType( I_VideoBuffer ) == "C"
-        AlgSyncFromVid( I_VideoBuffer )
-    ELSE
-        AlgSyncFramebuffer()
+        SdlPresent( I_VideoBuffer )
     ENDIF
-
-    AlgStretchBlit( s_dest_x, s_dest_y, s_dest_w, s_dest_h )
+    IF SdlQuitRequested()
+        I_Quit()
+    ENDIF
 RETURN NIL
 
 FUNCTION DG_SleepMs( ms )
-    AlgRest( ms )
+    SdlDelay( ms )
 RETURN NIL
 
 FUNCTION DG_GetTicksMs()
-RETURN AlgGetTicks()
-
-STATIC FUNCTION ConvertToDoomKey( scancode )
-    SWITCH scancode
-    CASE ALG_KEY_RIGHT
-        RETURN KEY_RIGHTARROW
-    CASE ALG_KEY_LEFT
-        RETURN KEY_LEFTARROW
-    CASE ALG_KEY_UP
-        RETURN KEY_UPARROW
-    CASE ALG_KEY_DOWN
-        RETURN KEY_DOWNARROW
-    CASE ALG_KEY_COMMA
-        RETURN KEY_STRAFE_L
-    CASE ALG_KEY_STOP
-        RETURN KEY_STRAFE_R
-    CASE ALG_KEY_SPACE
-        RETURN KEY_USE
-    CASE ALG_KEY_LCONTROL
-        RETURN KEY_FIRE
-    CASE ALG_KEY_ESC
-        RETURN KEY_ESCAPE
-    CASE ALG_KEY_ENTER
-        RETURN KEY_ENTER
-    CASE ALG_KEY_TAB
-        RETURN KEY_TAB
-    CASE ALG_KEY_F1
-        RETURN KEY_F1
-    CASE ALG_KEY_F2
-        RETURN KEY_F2
-    CASE ALG_KEY_F3
-        RETURN KEY_F3
-    CASE ALG_KEY_F4
-        RETURN KEY_F4
-    CASE ALG_KEY_F5
-        RETURN KEY_F5
-    CASE ALG_KEY_F6
-        RETURN KEY_F6
-    CASE ALG_KEY_F7
-        RETURN KEY_F7
-    CASE ALG_KEY_F8
-        RETURN KEY_F8
-    CASE ALG_KEY_F9
-        RETURN KEY_F9
-    CASE ALG_KEY_F10
-        RETURN KEY_F10
-    CASE ALG_KEY_F11
-        RETURN KEY_F11
-    CASE ALG_KEY_F12
-        RETURN KEY_F12
-    CASE ALG_KEY_BACKSPACE
-        RETURN KEY_BACKSPACE
-    CASE ALG_KEY_PAUSE
-        RETURN KEY_PAUSE
-    CASE ALG_KEY_EQUALS
-        RETURN KEY_EQUALS
-    CASE ALG_KEY_MINUS
-        RETURN KEY_MINUS
-    CASE ALG_KEY_LSHIFT
-    CASE ALG_KEY_RSHIFT
-        RETURN KEY_RSHIFT
-    CASE ALG_KEY_RCONTROL
-        RETURN KEY_RCTRL
-    CASE ALG_KEY_ALT
-        RETURN KEY_RALT
-    CASE ALG_KEY_CAPSLOCK
-        RETURN KEY_CAPSLOCK
-    CASE ALG_KEY_NUMLOCK
-        RETURN KEY_NUMLOCK
-    CASE ALG_KEY_SCRLOCK
-        RETURN KEY_SCRLCK
-    CASE ALG_KEY_PRTSCR
-        RETURN KEY_PRTSCR
-    CASE ALG_KEY_HOME
-        RETURN KEY_HOME
-    CASE ALG_KEY_END
-        RETURN KEY_END
-    CASE ALG_KEY_PGUP
-        RETURN KEY_PGUP
-    CASE ALG_KEY_PGDN
-        RETURN KEY_PGDN
-    CASE ALG_KEY_INSERT
-        RETURN KEY_INS
-    CASE ALG_KEY_DEL
-        RETURN KEY_DEL
-    CASE ALG_KEY_0_PAD
-        RETURN KEYP_0
-    CASE ALG_KEY_1_PAD
-        RETURN KEYP_1
-    CASE ALG_KEY_2_PAD
-        RETURN KEYP_2
-    CASE ALG_KEY_3_PAD
-        RETURN KEYP_3
-    CASE ALG_KEY_4_PAD
-        RETURN KEYP_4
-    CASE ALG_KEY_5_PAD
-        RETURN KEYP_5
-    CASE ALG_KEY_6_PAD
-        RETURN KEYP_6
-    CASE ALG_KEY_7_PAD
-        RETURN KEYP_7
-    CASE ALG_KEY_8_PAD
-        RETURN KEYP_8
-    CASE ALG_KEY_9_PAD
-        RETURN KEYP_9
-    CASE ALG_KEY_SLASH_PAD
-        RETURN KEYP_DIVIDE
-    CASE ALG_KEY_PLUS_PAD
-        RETURN KEYP_PLUS
-    CASE ALG_KEY_MINUS_PAD
-        RETURN KEYP_MINUS
-    CASE ALG_KEY_ASTERISK
-        RETURN KEYP_MULTIPLY
-    CASE ALG_KEY_DEL_PAD
-        RETURN KEYP_PERIOD
-    CASE ALG_KEY_EQUALS_PAD
-        RETURN KEYP_EQUALS
-    CASE ALG_KEY_ENTER_PAD
-        RETURN KEYP_ENTER
-    ENDSWITCH
-    IF scancode >= 1 .AND. scancode <= 26
-        RETURN Asc( "a" ) + scancode - 1
-    ENDIF
-    IF scancode == 27
-        RETURN Asc( "0" )
-    ENDIF
-    IF scancode >= 28 .AND. scancode <= 36
-        RETURN Asc( "1" ) + scancode - 28
-    ENDIF
-RETURN AlgScancodeToAscii( scancode )
+RETURN SdlTicks()
 
 FUNCTION DG_GetKey( pressed, doomKey )
-    LOCAL scancode
-    LOCAL released
-    LOCAL keyData
+    LOCAL aKey
 
-    scancode := AlgKeyPop()
-    IF scancode == NIL
+    aKey := SdlKeyPop()
+    IF aKey == NIL
+        IF SdlQuitRequested()
+            I_Quit()
+        ENDIF
         RETURN 0
     ENDIF
-
-    released := ( ( scancode & 0x80 ) != 0 )
-    pressed := iif( released, 0, 1 )
-
-    scancode := ( scancode & 0x7F )
-    keyData := ConvertToDoomKey( scancode )
-    IF keyData != 0
-        doomKey := ( keyData & 0xFF )
-    ENDIF
+    pressed := aKey[ 1 ]
+    doomKey := aKey[ 2 ]
 RETURN 1
 
 FUNCTION DG_SetWindowTitle( title )
-    AlgSetWindowTitle( title )
+    SdlSetTitle( title )
 RETURN NIL
 
 #pragma BEGINDUMP

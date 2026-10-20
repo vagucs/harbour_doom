@@ -33,6 +33,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
+copy /Y "sdl3\SDL3-3.4.18-win32-x86\SDL3.dll" "SDL3.dll" >nul
 echo.
 echo Pronto: Doom_hb.exe
 echo Coloque DOOM1.WAD nesta pasta.
