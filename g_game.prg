@@ -1961,11 +1961,13 @@ FUNCTION G_CheckDemoStatus()
         nFps := iif( nReal != 0, ( gametic * TICRATE ) / nReal, 0 )
         timingdemo := .F.
         demoplayback := .F.
+        SyncFlush()
         I_Error( "timed " + hb_ntos( gametic ) + " gametics in " + hb_ntos( nReal ) + ;
             " realtics (" + hb_ntos( nFps ) + " fps)" )
     ENDIF
 
     IF demoplayback
+        SyncFlush()
         W_ReleaseLumpName( defdemoname )
         demoplayback := .F.
         netdemo := .F.

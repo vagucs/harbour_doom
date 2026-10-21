@@ -528,7 +528,7 @@ extern unsigned char *DG_ScreenBuffer;
 boolean palette_changed;
 struct color colors[ 256 ];
 
-static int s_max_colors = 75;
+static int s_max_colors = 256;
 /* Percentual das cores livres gasto em rampas de luz (chao/teto).
    0 = so farthest-point. */
 static int s_shade_pct = 75;

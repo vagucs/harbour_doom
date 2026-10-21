@@ -23,6 +23,13 @@ www.vagucs.com.br
 #include "doomstat.ch"
 #include "doomdef.ch"
 
+/* Full DEMO1 checksum log: harbour_doom/sync_demo1.log
+   fields: tic health armor x y z floorz momx momy angle nAlive sxSum prnd weapon mislammo
+   Regenerate with: Doom_hb.exe -iwad ..\DOOM1.WAD -timedemo demo1
+*/
+STATIC sSyncH := NIL
+STATIC sSyncPath := "c:\projetos\git\doomgeneric\doomgeneric\doom_minimal\harbour_doom\sync_demo1.log"
+
 
 PROCEDURE P_InitThinkers()
     MEMVAR thinkercap
@@ -153,7 +160,66 @@ PROCEDURE P_Ticker()
     P_UpdateSpecials()
     P_RespawnSpecials()
 
+    IF demoplayback
+        SyncLog()
+    ENDIF
+
     leveltime++
+RETURN
+
+PROCEDURE SyncFlush()
+    IF sSyncH != NIL .AND. sSyncH >= 0
+        FClose( sSyncH )
+        sSyncH := -1
+    ENDIF
+RETURN
+
+STATIC PROCEDURE SyncLog()
+    LOCAL mo
+    LOCAL p
+    LOCAL c
+    LOCAL th
+    LOCAL o
+    LOCAL n := 0
+    LOCAL sx := 0
+    MEMVAR consoleplayer
+    MEMVAR leveltime
+    MEMVAR players
+    MEMVAR thinkercap
+
+    IF sSyncH != NIL .AND. sSyncH < 0
+        RETURN
+    ENDIF
+    IF sSyncH == NIL
+        sSyncH := FCreate( sSyncPath )
+        IF sSyncH < 0
+            sSyncH := -1
+            RETURN
+        ENDIF
+    ENDIF
+    p := players[ consoleplayer + 1 ]
+    mo := p:mo
+    IF mo == NIL
+        RETURN
+    ENDIF
+    th := thinkercap:next
+    DO WHILE th != NIL .AND. !( th == thinkercap )
+        o := th:owner
+        IF o != NIL .AND. o:ClassName() == "MOBJ_T"
+            IF ( o:flags & 4194304 ) != 0 .AND. o:health > 0
+                n++
+                sx += Int( o:x / 65536 )
+            ENDIF
+        ENDIF
+        th := th:next
+    ENDDO
+    c := hb_ntos( leveltime ) + " " + hb_ntos( Int( p:health ) ) + " " + hb_ntos( Int( p:armorpoints ) ) ;
+       + " " + hb_ntos( Int( mo:x / 65536 ) ) + " " + hb_ntos( Int( mo:y / 65536 ) ) ;
+       + " " + hb_ntos( Int( mo:z / 65536 ) ) + " " + hb_ntos( Int( mo:floorz / 65536 ) ) ;
+       + " " + hb_ntos( mo:momx ) + " " + hb_ntos( mo:momy ) + " " + hb_ntos( mo:angle ) ;
+       + " " + hb_ntos( n ) + " " + hb_ntos( sx ) + " " + hb_ntos( P_PrndIndex() ) ;
+       + " " + hb_ntos( p:readyweapon ) + " " + hb_ntos( p:ammo[ am_misl + 1 ] ) + Chr( 10 )
+    FWrite( sSyncH, c )
 RETURN
 
 INIT PROCEDURE init_p_tick

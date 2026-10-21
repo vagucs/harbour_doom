@@ -33,23 +33,35 @@ STATIC fuzzpos
 #define PU_STATIC  1
 #define PU_CACHE   8
 
+/* Descomente para loops de coluna/span em C (mais rapido, menos Harbour).
+   Default: Harbour + VidBSet in-place (sem Stuff() de 64KB por pixel). */
 
+//#define VID_DRAW_C
+
+/* In-place byte poke (hb_itemGetWriteCL) — substitui Stuff() no framebuffer. */
 STATIC PROCEDURE SetVid( nOff, nByte )
     MEMVAR I_VideoBuffer
-    I_VideoBuffer := Stuff( I_VideoBuffer, nOff + 1, 1, Chr( nByte & 0xFF ) )
+    VidBSet( @I_VideoBuffer, nOff, nByte )
 RETURN
 
 STATIC FUNCTION GetVid( nOff )
     MEMVAR I_VideoBuffer
-RETURN Asc( SubStr( I_VideoBuffer, nOff + 1, 1 ) )
+RETURN VidBPeek( I_VideoBuffer, nOff )
 
 STATIC FUNCTION ByteAt( cData, nIndex )
     IF ValType( cData ) == "C"
-        RETURN Asc( SubStr( cData, nIndex + 1, 1 ) )
+        RETURN VidBPeek( cData, nIndex )
     ENDIF
 RETURN cData[ nIndex + 1 ]
 
 PROCEDURE R_DrawColumn()
+#ifdef VID_DRAW_C
+    MEMVAR I_VideoBuffer, dc_colormap, dc_x, dc_yl, dc_yh, dc_iscale
+    MEMVAR dc_texturemid, dc_source, centery, ylookup, columnofs
+    VidDrawColumn( @I_VideoBuffer, dc_colormap, dc_source, ;
+        ylookup, columnofs, dc_x, dc_yl, dc_yh, dc_iscale, ;
+        dc_texturemid, centery, .F. )
+#else
     MEMVAR dc_colormap, dc_x, dc_yl, dc_yh, dc_iscale
     MEMVAR dc_texturemid, dc_source, centery, ylookup, columnofs
     LOCAL count := dc_yh - dc_yl
@@ -76,9 +88,17 @@ PROCEDURE R_DrawColumn()
             EXIT
         ENDIF
     ENDDO
+#endif
 RETURN
 
 PROCEDURE R_DrawColumnLow()
+#ifdef VID_DRAW_C
+    MEMVAR I_VideoBuffer, dc_colormap, dc_x, dc_yl, dc_yh, dc_iscale
+    MEMVAR dc_texturemid, dc_source, centery, ylookup, columnofs
+    VidDrawColumn( @I_VideoBuffer, dc_colormap, dc_source, ;
+        ylookup, columnofs, dc_x, dc_yl, dc_yh, dc_iscale, ;
+        dc_texturemid, centery, .T. )
+#else
     MEMVAR dc_colormap, dc_x, dc_yl, dc_yh, dc_iscale
     MEMVAR dc_texturemid, dc_source, centery, ylookup, columnofs
     LOCAL count := dc_yh - dc_yl
@@ -113,6 +133,7 @@ PROCEDURE R_DrawColumnLow()
             EXIT
         ENDIF
     ENDDO
+#endif
 RETURN
 
 PROCEDURE R_DrawFuzzColumn()
@@ -190,6 +211,13 @@ PROCEDURE R_DrawFuzzColumnLow()
 RETURN
 
 PROCEDURE R_DrawTranslatedColumn()
+#ifdef VID_DRAW_C
+    MEMVAR I_VideoBuffer, dc_colormap, dc_translation, dc_x, dc_yl, dc_yh, dc_iscale
+    MEMVAR dc_texturemid, dc_source, centery, ylookup, columnofs
+    VidDrawTranslatedColumn( @I_VideoBuffer, dc_colormap, dc_translation, ;
+        dc_source, ylookup, columnofs, dc_x, dc_yl, dc_yh, dc_iscale, ;
+        dc_texturemid, centery, .F. )
+#else
     MEMVAR dc_colormap, dc_translation, dc_x, dc_yl, dc_yh, dc_iscale
     MEMVAR dc_texturemid, dc_source, centery, ylookup, columnofs
     LOCAL count := dc_yh - dc_yl
@@ -218,9 +246,17 @@ PROCEDURE R_DrawTranslatedColumn()
             EXIT
         ENDIF
     ENDDO
+#endif
 RETURN
 
 PROCEDURE R_DrawTranslatedColumnLow()
+#ifdef VID_DRAW_C
+    MEMVAR I_VideoBuffer, dc_colormap, dc_translation, dc_x, dc_yl, dc_yh, dc_iscale
+    MEMVAR dc_texturemid, dc_source, centery, ylookup, columnofs
+    VidDrawTranslatedColumn( @I_VideoBuffer, dc_colormap, dc_translation, ;
+        dc_source, ylookup, columnofs, dc_x, dc_yl, dc_yh, dc_iscale, ;
+        dc_texturemid, centery, .T. )
+#else
     MEMVAR dc_colormap, dc_translation, dc_x, dc_yl, dc_yh, dc_iscale
     MEMVAR dc_texturemid, dc_source, centery, ylookup, columnofs
     LOCAL count := dc_yh - dc_yl
@@ -257,6 +293,7 @@ PROCEDURE R_DrawTranslatedColumnLow()
             EXIT
         ENDIF
     ENDDO
+#endif
 RETURN
 
 PROCEDURE R_InitTranslationTables()
@@ -284,6 +321,13 @@ PROCEDURE R_InitTranslationTables()
 RETURN
 
 PROCEDURE R_DrawSpan()
+#ifdef VID_DRAW_C
+    MEMVAR I_VideoBuffer, ds_y, ds_x1, ds_x2, ds_colormap, ds_xfrac, ds_yfrac
+    MEMVAR ds_xstep, ds_ystep, ds_source, ylookup, columnofs
+    VidDrawSpan( @I_VideoBuffer, ds_colormap, ds_source, ;
+        ylookup, columnofs, ds_y, ds_x1, ds_x2, ;
+        ds_xfrac, ds_yfrac, ds_xstep, ds_ystep, .F. )
+#else
     MEMVAR ds_y, ds_x1, ds_x2, ds_colormap, ds_xfrac, ds_yfrac
     MEMVAR ds_xstep, ds_ystep, ds_source, ylookup, columnofs
     LOCAL position
@@ -315,9 +359,17 @@ PROCEDURE R_DrawSpan()
             EXIT
         ENDIF
     ENDDO
+#endif
 RETURN
 
 PROCEDURE R_DrawSpanLow()
+#ifdef VID_DRAW_C
+    MEMVAR I_VideoBuffer, ds_y, ds_x1, ds_x2, ds_colormap, ds_xfrac, ds_yfrac
+    MEMVAR ds_xstep, ds_ystep, ds_source, ylookup, columnofs
+    VidDrawSpan( @I_VideoBuffer, ds_colormap, ds_source, ;
+        ylookup, columnofs, ds_y, ds_x1, ds_x2, ;
+        ds_xfrac, ds_yfrac, ds_xstep, ds_ystep, .T. )
+#else
     MEMVAR ds_y, ds_x1, ds_x2, ds_colormap, ds_xfrac, ds_yfrac
     MEMVAR ds_xstep, ds_ystep, ds_source, ylookup, columnofs
     LOCAL position
@@ -349,6 +401,7 @@ PROCEDURE R_DrawSpanLow()
             EXIT
         ENDIF
     ENDDO
+#endif
 RETURN
 
 PROCEDURE R_InitBuffer( width, height )
@@ -527,3 +580,350 @@ INIT PROCEDURE init_r_draw
         -SCREENWIDTH,  SCREENWIDTH,  SCREENWIDTH, -SCREENWIDTH,  SCREENWIDTH }
     fuzzpos := 1
 RETURN
+
+#pragma BEGINDUMP
+#include "hbapi.h"
+#include "hbapiitm.h"
+
+/* Resolve @string (BYREF) or plain string param. */
+static PHB_ITEM vid_param_string( int iParam )
+{
+   PHB_ITEM pItem;
+
+   if( HB_ISBYREF( iParam ) )
+   {
+      pItem = hb_param( iParam, HB_IT_BYREF );
+      if( pItem == NULL )
+         return NULL;
+      pItem = hb_itemUnRef( pItem );
+   }
+   else
+      pItem = hb_param( iParam, HB_IT_STRING );
+
+   if( pItem == NULL || ! HB_IS_STRING( pItem ) )
+      return NULL;
+   return pItem;
+}
+
+/* VidBSet( @cBuf, nOff0, nByte ) — in-place poke (hb_BSet equivalent). */
+HB_FUNC( VIDBSET )
+{
+   PHB_ITEM pBuf = vid_param_string( 1 );
+   char * psz;
+   HB_SIZE nLen;
+   HB_ISIZ nOff;
+   int nByte;
+
+   if( pBuf == NULL || ! HB_ISNUM( 2 ) )
+   {
+      hb_retl( HB_FALSE );
+      return;
+   }
+
+   nOff = hb_parns( 2 );
+   nByte = hb_parni( 3 ) & 0xFF;
+
+   if( nOff < 0 || ! hb_itemGetWriteCL( pBuf, &psz, &nLen ) || ( HB_SIZE ) nOff >= nLen )
+   {
+      hb_retl( HB_FALSE );
+      return;
+   }
+
+   psz[ nOff ] = ( char ) nByte;
+   hb_retl( HB_TRUE );
+}
+
+/* VidBPeek( cBuf, nOff0 ) — read one byte, 0-based. */
+HB_FUNC( VIDBPEEK )
+{
+   const char * psz = hb_parc( 1 );
+   HB_SIZE nLen = hb_parclen( 1 );
+   HB_ISIZ nOff = hb_parns( 2 );
+
+   if( psz == NULL || nOff < 0 || ( HB_SIZE ) nOff >= nLen )
+      hb_retni( 0 );
+   else
+      hb_retni( ( unsigned char ) psz[ nOff ] );
+}
+
+//#ifdef VID_DRAW_C
+#include <string.h>
+
+#ifndef SCREENWIDTH
+#define SCREENWIDTH 320
+#endif
+#ifndef FRACBITS
+#define FRACBITS 16
+#endif
+
+HB_FUNC( VIDDRAWCOLUMN )
+{
+   PHB_ITEM pBuf = vid_param_string( 1 );
+   const unsigned char * colormap;
+   const unsigned char * source;
+   HB_SIZE nMapLen, nSrcLen, nFbLen;
+   char * fb;
+   PHB_ITEM pYlookup = hb_param( 4, HB_IT_ARRAY );
+   PHB_ITEM pColofs = hb_param( 5, HB_IT_ARRAY );
+   int dc_x = hb_parni( 6 );
+   int dc_yl = hb_parni( 7 );
+   int dc_yh = hb_parni( 8 );
+   int fracstep = hb_parni( 9 );
+   int texturemid = hb_parni( 10 );
+   int centery = hb_parni( 11 );
+   HB_BOOL fLow = hb_parl( 12 );
+   int count;
+   int dest, dest2 = 0;
+   int frac;
+   int x;
+
+   colormap = ( const unsigned char * ) hb_parc( 2 );
+   source = ( const unsigned char * ) hb_parc( 3 );
+   nMapLen = hb_parclen( 2 );
+   nSrcLen = hb_parclen( 3 );
+
+   if( pBuf == NULL || colormap == NULL || source == NULL ||
+       pYlookup == NULL || pColofs == NULL )
+      return;
+   if( ! hb_itemGetWriteCL( pBuf, &fb, &nFbLen ) )
+      return;
+
+   count = dc_yh - dc_yl;
+   if( count < 0 )
+      return;
+
+   if( fLow )
+   {
+      x = dc_x * 2;
+      dest = ( int ) hb_arrayGetNI( pYlookup, dc_yl + 1 ) +
+             ( int ) hb_arrayGetNI( pColofs, x + 1 );
+      dest2 = ( int ) hb_arrayGetNI( pYlookup, dc_yl + 1 ) +
+              ( int ) hb_arrayGetNI( pColofs, x + 2 );
+   }
+   else
+   {
+      dest = ( int ) hb_arrayGetNI( pYlookup, dc_yl + 1 ) +
+             ( int ) hb_arrayGetNI( pColofs, dc_x + 1 );
+   }
+
+   frac = texturemid + ( dc_yl - centery ) * fracstep;
+
+   do
+   {
+      unsigned int idx = ( ( unsigned int ) frac >> FRACBITS ) & 127u;
+      unsigned char src;
+      unsigned char pixel;
+
+      if( idx < nSrcLen )
+         src = source[ idx ];
+      else
+         src = 0;
+      if( ( HB_SIZE ) src < nMapLen )
+         pixel = colormap[ src ];
+      else
+         pixel = 0;
+
+      if( ( HB_SIZE ) dest < nFbLen )
+         fb[ dest ] = ( char ) pixel;
+      if( fLow && ( HB_SIZE ) dest2 < nFbLen )
+         fb[ dest2 ] = ( char ) pixel;
+
+      dest += SCREENWIDTH;
+      if( fLow )
+         dest2 += SCREENWIDTH;
+      frac += fracstep;
+   }
+   while( --count >= 0 );
+}
+
+/*
+ * VidDrawTranslatedColumn( @fb, colormap, translation, source,
+ *   ylookup, columnofs, dc_x, dc_yl, dc_yh, iscale, texturemid, centery, low )
+ */
+HB_FUNC( VIDDRAWTRANSLATEDCOLUMN )
+{
+   PHB_ITEM pBuf = vid_param_string( 1 );
+   const unsigned char * colormap;
+   const unsigned char * translation;
+   const unsigned char * source;
+   HB_SIZE nMapLen, nTrLen, nSrcLen, nFbLen;
+   char * fb;
+   PHB_ITEM pYlookup = hb_param( 5, HB_IT_ARRAY );
+   PHB_ITEM pColofs = hb_param( 6, HB_IT_ARRAY );
+   int dc_x = hb_parni( 7 );
+   int dc_yl = hb_parni( 8 );
+   int dc_yh = hb_parni( 9 );
+   int fracstep = hb_parni( 10 );
+   int texturemid = hb_parni( 11 );
+   int centery = hb_parni( 12 );
+   HB_BOOL fLow = hb_parl( 13 );
+   int count, dest, dest2 = 0, frac, x;
+
+   colormap = ( const unsigned char * ) hb_parc( 2 );
+   translation = ( const unsigned char * ) hb_parc( 3 );
+   source = ( const unsigned char * ) hb_parc( 4 );
+   nMapLen = hb_parclen( 2 );
+   nTrLen = hb_parclen( 3 );
+   nSrcLen = hb_parclen( 4 );
+
+   if( pBuf == NULL || colormap == NULL || translation == NULL || source == NULL ||
+       pYlookup == NULL || pColofs == NULL )
+      return;
+   if( ! hb_itemGetWriteCL( pBuf, &fb, &nFbLen ) )
+      return;
+
+   count = dc_yh - dc_yl;
+   if( count < 0 )
+      return;
+
+   if( fLow )
+   {
+      x = dc_x * 2;
+      dest = ( int ) hb_arrayGetNI( pYlookup, dc_yl + 1 ) +
+             ( int ) hb_arrayGetNI( pColofs, x + 1 );
+      dest2 = ( int ) hb_arrayGetNI( pYlookup, dc_yl + 1 ) +
+              ( int ) hb_arrayGetNI( pColofs, x + 2 );
+   }
+   else
+   {
+      dest = ( int ) hb_arrayGetNI( pYlookup, dc_yl + 1 ) +
+             ( int ) hb_arrayGetNI( pColofs, dc_x + 1 );
+   }
+
+   frac = texturemid + ( dc_yl - centery ) * fracstep;
+
+   do
+   {
+      unsigned int idx = ( unsigned int ) frac >> FRACBITS;
+      unsigned char src, translated, pixel;
+
+      if( idx < nSrcLen )
+         src = source[ idx ];
+      else
+         src = 0;
+      if( ( HB_SIZE ) src < nTrLen )
+         translated = translation[ src ];
+      else
+         translated = src;
+      if( ( HB_SIZE ) translated < nMapLen )
+         pixel = colormap[ translated ];
+      else
+         pixel = 0;
+
+      if( ( HB_SIZE ) dest < nFbLen )
+         fb[ dest ] = ( char ) pixel;
+      if( fLow && ( HB_SIZE ) dest2 < nFbLen )
+         fb[ dest2 ] = ( char ) pixel;
+
+      dest += SCREENWIDTH;
+      if( fLow )
+         dest2 += SCREENWIDTH;
+      frac += fracstep;
+   }
+   while( --count >= 0 );
+}
+
+/*
+ * VidDrawSpan( @fb, colormap, source, ylookup, columnofs,
+ *   ds_y, ds_x1, ds_x2, xfrac, yfrac, xstep, ystep, low )
+ */
+HB_FUNC( VIDDRAWSPAN )
+{
+   PHB_ITEM pBuf = vid_param_string( 1 );
+   const unsigned char * colormap;
+   const unsigned char * source;
+   HB_SIZE nMapLen, nSrcLen, nFbLen;
+   char * fb;
+   PHB_ITEM pYlookup = hb_param( 4, HB_IT_ARRAY );
+   PHB_ITEM pColofs = hb_param( 5, HB_IT_ARRAY );
+   int ds_y = hb_parni( 6 );
+   int ds_x1 = hb_parni( 7 );
+   int ds_x2 = hb_parni( 8 );
+   int xfrac = hb_parni( 9 );
+   int yfrac = hb_parni( 10 );
+   int xstep = hb_parni( 11 );
+   int ystep = hb_parni( 12 );
+   HB_BOOL fLow = hb_parl( 13 );
+   unsigned int position, nStep;
+   int dest, count;
+   int spot;
+
+   colormap = ( const unsigned char * ) hb_parc( 2 );
+   source = ( const unsigned char * ) hb_parc( 3 );
+   nMapLen = hb_parclen( 2 );
+   nSrcLen = hb_parclen( 3 );
+
+   if( pBuf == NULL || colormap == NULL || source == NULL ||
+       pYlookup == NULL || pColofs == NULL )
+      return;
+   if( ! hb_itemGetWriteCL( pBuf, &fb, &nFbLen ) )
+      return;
+
+   position = ( ( ( unsigned int ) ( xfrac * 1024 ) ) & 0xFFFF0000u ) |
+              ( ( ( ( unsigned int ) yfrac ) >> 6 ) & 0x0000FFFFu );
+   nStep = ( ( ( unsigned int ) ( xstep * 1024 ) ) & 0xFFFF0000u ) |
+           ( ( ( ( unsigned int ) ystep ) >> 6 ) & 0x0000FFFFu );
+
+   count = ds_x2 - ds_x1;
+
+   if( fLow )
+   {
+      ds_x1 *= 2;
+      dest = ( int ) hb_arrayGetNI( pYlookup, ds_y + 1 ) +
+             ( int ) hb_arrayGetNI( pColofs, ds_x1 + 1 );
+
+      do
+      {
+         unsigned char src, pixel;
+
+         spot = ( int ) ( ( position >> 26 ) | ( ( position >> 4 ) & 0x0FC0u ) );
+         if( ( HB_SIZE ) spot < nSrcLen )
+            src = source[ spot ];
+         else
+            src = 0;
+         if( ( HB_SIZE ) src < nMapLen )
+            pixel = colormap[ src ];
+         else
+            pixel = 0;
+
+         if( ( HB_SIZE ) dest < nFbLen )
+            fb[ dest ] = ( char ) pixel;
+         if( ( HB_SIZE ) ( dest + 1 ) < nFbLen )
+            fb[ dest + 1 ] = ( char ) pixel;
+
+         dest += 2;
+         position += nStep;
+      }
+      while( --count >= 0 );
+   }
+   else
+   {
+      dest = ( int ) hb_arrayGetNI( pYlookup, ds_y + 1 ) +
+             ( int ) hb_arrayGetNI( pColofs, ds_x1 + 1 );
+
+      do
+      {
+         unsigned char src, pixel;
+
+         spot = ( int ) ( ( position >> 26 ) | ( ( position >> 4 ) & 0x0FC0u ) );
+         if( ( HB_SIZE ) spot < nSrcLen )
+            src = source[ spot ];
+         else
+            src = 0;
+         if( ( HB_SIZE ) src < nMapLen )
+            pixel = colormap[ src ];
+         else
+            pixel = 0;
+
+         if( ( HB_SIZE ) dest < nFbLen )
+            fb[ dest ] = ( char ) pixel;
+
+         dest++;
+         position += nStep;
+      }
+      while( --count >= 0 );
+   }
+}
+//#endif /* VID_DRAW_C */
+
+#pragma ENDDUMP

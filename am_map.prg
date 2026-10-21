@@ -214,7 +214,7 @@ RETURN f_y + ( f_h - MTOF( y - m_y ) )
 
 STATIC PROCEDURE PutDot( xx, yy, cc )
     MEMVAR I_VideoBuffer
-    I_VideoBuffer := Stuff( I_VideoBuffer, ( yy * f_w + xx ) + 1, 1, Chr( cc & 0xFF ) )
+    VidBSet( @I_VideoBuffer, yy * f_w + xx, cc )
 RETURN
 
 INIT PROCEDURE init_am_map
@@ -1176,7 +1176,7 @@ PROCEDURE AM_drawCrosshair( color )
     LOCAL nOff
     MEMVAR I_VideoBuffer
     nOff := Int( ( f_w * ( f_h + 1 ) ) / 2 )
-    I_VideoBuffer := Stuff( I_VideoBuffer, nOff + 1, 1, Chr( color & 0xFF ) )
+    VidBSet( @I_VideoBuffer, nOff, color )
 RETURN
 
 PROCEDURE AM_Drawer()

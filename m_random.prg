@@ -56,6 +56,9 @@ FUNCTION P_Random()
     prndindex := ( ( prndindex + 1 ) & 0xFF )
 RETURN rndtable[ prndindex + 1 ]
 
+FUNCTION P_PrndIndex()
+RETURN prndindex
+
 FUNCTION M_Random()
     MEMVAR rndindex
     rndindex := ( ( rndindex + 1 ) & 0xFF )
