@@ -224,6 +224,7 @@ RETURN .T.
 FUNCTION P_CrossBSPNode( bspnum )
     LOCAL bsp
     LOCAL side
+    LOCAL other
     MEMVAR nodes
 
     IF ( bspnum & NF_SUBSECTOR ) != 0
@@ -245,7 +246,8 @@ FUNCTION P_CrossBSPNode( bspnum )
         RETURN .F.
     ENDIF
 
-    IF side == P_DivlineSide( t2x, t2y, bsp )
+    other := P_DivlineSide( t2x, t2y, bsp )
+    IF side == other
         RETURN .T.
     ENDIF
 

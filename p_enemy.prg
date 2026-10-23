@@ -587,6 +587,7 @@ FUNCTION A_Chase( actor )
     MEMVAR fastparm
     MEMVAR gameskill
     MEMVAR netgame
+    MEMVAR leveltime
 
     IF actor:reactiontime != 0
         actor:reactiontime := actor:reactiontime - 1
@@ -639,12 +640,14 @@ FUNCTION A_Chase( actor )
         lNomissile := .F.
         IF gameskill < sk_nightmare .AND. ! fastparm .AND. actor:movecount != 0
             lNomissile := .T.
-        ELSEIF ! P_CheckMissileRange( actor )
-            lNomissile := .T.
         ELSE
-            P_SetMobjState( actor, actor:info:missilestate )
-            actor:flags := ( actor:flags | MF_JUSTATTACKED )
-            RETURN NIL
+            IF ! P_CheckMissileRange( actor )
+                lNomissile := .T.
+            ELSE
+                P_SetMobjState( actor, actor:info:missilestate )
+                actor:flags := ( actor:flags | MF_JUSTATTACKED )
+                RETURN NIL
+            ENDIF
         ENDIF
     ENDIF
 

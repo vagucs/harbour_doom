@@ -816,8 +816,8 @@ FUNCTION P_DamageMobj( target, inflictor, source, damage )
        .AND. source:type != MT_VILE
         target:target := source
         target:threshold := BASETHRESHOLD
-        IF ( target:iState == target:info:spawnstate ;
-             .OR. target:state == states[ target:info:spawnstate + 1 ] ) ;
+        // p_inter.c: only spawnstate (not spawnstate+1).
+        IF target:iState == target:info:spawnstate ;
            .AND. target:info:seestate != S_NULL
             P_SetMobjState( target, target:info:seestate )
         ENDIF
